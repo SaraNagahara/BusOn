@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "buson",
+    "slug": "buson",
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
