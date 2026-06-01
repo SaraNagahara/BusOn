@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const UserController = require("../controllers/UserController");
+const ScheduleController = require("../controllers/ScheduleController");
 
 //Middleware
 const VerifyToken = require("../middlewares/virifyToken");

@@ -18,7 +18,9 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // Routes
 const UserRoutes = require("./routes/UserRoutes");
+const ScheduleRoutes = require("./routes/ScheduleRoutes");
 
 app.use("/users", UserRoutes);
+app.use("/schedule", ScheduleRoutes);
 
 module.exports = app;

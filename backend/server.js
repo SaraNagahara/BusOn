@@ -2,6 +2,8 @@ require('dotenv').config();
 const app = require("./src/app");
 const db = require("./src/db/conn");
 const User = require("./src/models/User");
+const Bus_schedules = require("./src/models/Bus_schedules");
+const PasswordReset = require("./src/models/PasswordReset");
 
 // Criar e ajustar as tabelas do 0, cuidado com isso prq ele apaga todos dados, em produção iremos tirar.
 // db.sync({ alter: true }) 
