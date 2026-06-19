@@ -6,7 +6,18 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3afd524f-ef3a-4b26-9670-bcd17fcd523c"
+      }
+    },
+    "android": {
+      "package": "com.saranagahara.buson"
+    }
   }
 }

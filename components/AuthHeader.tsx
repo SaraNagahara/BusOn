@@ -3,7 +3,7 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 // Importe seus ícones
-import { fonts } from "../_layout";
+import { fonts } from "../../buson/app/_layout";
 import LogoApp from "../assets/icons/logoApp.svg";
 import SetaBrancaEsquerda from "../assets/icons/setabrancacomtraco.svg";
 

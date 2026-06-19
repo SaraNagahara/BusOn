@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { NativeSyntheticEvent, TextInput, View } from "react-native";
 
 // Definimos o que o nosso componente reutilizável pode receber
@@ -47,7 +47,7 @@ export default function InputsCodigoVerificacao({
   };
 
   return (
-    <View className="flex-row justify-center items-center space-x-3 my-6 gap-4">
+    <View className="flex-row justify-center items-center">
       {code.map((value, index) => (
         <TextInput
           key={index}
@@ -60,11 +60,24 @@ export default function InputsCodigoVerificacao({
           keyboardType="number-pad"
           maxLength={1}
           textAlign="center"
-          className="w-20 h-20 border rounded-2xl bg-white text-2xl text-black font-bold"
-          style={{
-            borderColor: focusedIndex === index ? "#42C6C5" : "#D1D5DB",
-            borderWidth: focusedIndex === index ? 2 : 1,
-          }}
+          className="rounded-2xl bg-white text-2xl text-black font-bold"
+          style={[
+            {
+              width: 64,
+              height: 64,
+              marginRight: index !== code.length - 1 ? 12 : 0,
+              borderWidth: 2,
+              borderRadius: 16,
+              backgroundColor: "white",
+              textAlign: "center",
+              fontSize: 24,
+              fontWeight: "bold",
+              color: "black",
+            },
+            focusedIndex === index
+              ? { borderColor: "#42C6C5" }
+              : { borderColor: "#D1D5DB" },
+          ]}
         />
       ))}
     </View>

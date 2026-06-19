@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,13 +10,13 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { AuthHeader } from "../components/AuthHeader";
-import CardBranco from "../components/CardBranco";
-import ButtonAzulPadrao from "../components/buttonAzulPadrao";
+import { AuthHeader } from "../../components/AuthHeader";
+import CardBranco from "../../components/CardBranco";
+import ButtonAzulPadrao from "../../components/buttonAzulPadrao";
 
 import { Link } from "expo-router";
-import { FundoAzul } from "../components/fundoazul";
-import { Screen } from "../components/safearea";
+import { FundoAzul } from "../../components/fundoazul";
+import { Screen } from "../../components/safearea";
 
 type TabOption = "cadastrar" | "entrar";
 

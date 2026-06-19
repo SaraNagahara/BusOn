@@ -1,5 +1,4 @@
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
 import { Text, TouchableOpacity, ViewStyle } from "react-native";
 
 interface ButtonProps {
@@ -20,16 +19,14 @@ export default function ButtonAzulPadrao({
       className="mt-10 w-full"
       style={[
         {
-          // CORRIGIDO: Era selfAlign, o correto é alignSelf
           alignSelf: "stretch",
-          width: "auto", // Garante que a margem horizontal funcione
-
           elevation: 5,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.2,
           shadowRadius: 3,
-          borderRadius: 9999,
+          borderRadius: 20,
+          overflow: "hidden", // importante
         },
         style,
       ]}
@@ -38,13 +35,24 @@ export default function ButtonAzulPadrao({
         colors={["#1D61E7", "#1D61E7"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        className="py-4 items-center justify-center borderColor: #ffff"
         style={{
+          paddingVertical: 16,
           borderRadius: 20,
+          justifyContent: "center",
+          alignItems: "center",
           width: "100%",
         }}
       >
-        <Text className="text-white text-xl font-bold">{titulo}</Text>
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 20,
+            fontWeight: "bold",
+            textAlign: "center",
+          }}
+        >
+          {titulo}
+        </Text>
       </LinearGradient>
     </TouchableOpacity>
   );
