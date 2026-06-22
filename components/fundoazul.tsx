@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context"; // Importado para pegar a barra de baixo
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Importe de SVGs
 import Light from "../assets/icons/Light.svg";
@@ -12,20 +12,59 @@ interface FundoAzulProps {
 }
 
 export const FundoAzul: React.FC<FundoAzulProps> = ({ children }) => {
-  const insets = useSafeAreaInsets(); // Descobre o tamanho exato da barra de cliques inferior
+  const insets = useSafeAreaInsets();
 
   return (
     <View className="bg-[#1F3369] flex-1 relative overflow-hidden">
       {/* Camadas de Fundo */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {/* 1. Linhas */}
-        <Linhas
-          width="100%"
-          height="100%"
-          style={{ position: "absolute", opacity: 0.25 }}
-        />
+        {/* ========================================================
+            CAMADA 1: LINHAS (Espalhadas em cima, meio e baixo)
+           ======================================================== */}
+        {/* No Topo */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            opacity: 0.6,
+          }}
+        >
+          <Linhas width="100%" height={250} />
+        </View>
 
-        {/* 2. Luz (Fumaça) */}
+        {/* No Meio */}
+        <View
+          style={{
+            position: "absolute",
+            top: "40%",
+            left: 0,
+            right: 0,
+            opacity: 0.6,
+            transform: [{ scaleY: -1 }],
+          }}
+        >
+          {/* O transform espelha o SVG para que o desenho do meio não fique idêntico ao do topo */}
+          <Linhas width="100%" height={250} />
+        </View>
+
+        {/* Em Baixo */}
+        <View
+          style={{
+            position: "absolute",
+            bottom: insets.bottom + 20,
+            left: 0,
+            right: 0,
+            opacity: 0.6,
+          }}
+        >
+          <Linhas width="100%" height={250} />
+        </View>
+
+        {/* ========================================================
+            CAMADA 2: LUZ / FUMAÇA (Efeito de brilho no topo)
+           ======================================================== */}
         <View
           style={{
             position: "absolute",
@@ -42,23 +81,88 @@ export const FundoAzul: React.FC<FundoAzulProps> = ({ children }) => {
               position: "absolute",
               top: -220,
               left: -120,
-              opacity: 0.8,
+              opacity: 0.5,
             }}
           />
         </View>
 
-        {/* 3. Estrelas/Pontos */}
-        <StarRound
-          width="100%"
-          height="100%"
-          style={{ position: "absolute", opacity: 0.6 }}
-        />
+        {/* ========================================================
+    CAMADA 3: ESTRELAS / PONTOS (Visíveis e Espalhadas)
+   ======================================================== */}
+        {/* No Topo */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: "60%",
+            opacity: 0.7,
+          }}
+        >
+          <StarRound width="100%" height="100%" />
+        </View>
+
+        {/* No Meio */}
+        <View
+          style={{
+            position: "absolute",
+            top: "30%",
+            left: 0,
+            right: 0,
+            bottom: "30%",
+            opacity: 0.7,
+            transform: [{ scaleX: -1 }],
+          }}
+        >
+          <StarRound width="100%" height="100%" />
+        </View>
+
+        {/* Em Baixo */}
+        <View
+          style={{
+            position: "absolute",
+            top: "60%",
+            left: 0,
+            right: 0,
+            bottom: insets.bottom,
+            opacity: 0.7,
+          }}
+        >
+          <StarRound width="100%" height="100%" />
+        </View>
+
+        {/* No Meio (Invertido e deslocado) */}
+        <View
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: -40,
+            right: 0,
+            opacity: 0.5,
+            transform: [{ scaleX: -1 }],
+          }}
+        >
+          <StarRound width="100%" height={200} />
+        </View>
+
+        {/* Em Baixo */}
+        <View
+          style={{
+            position: "absolute",
+            bottom: insets.bottom + 80,
+            left: 20,
+            right: 0,
+            opacity: 0.5,
+          }}
+        >
+          <StarRound width="100%" height={200} />
+        </View>
       </View>
 
       {/* Conteúdo da sua tela */}
       {children}
 
-      
       {insets.bottom > 0 && (
         <View
           style={{

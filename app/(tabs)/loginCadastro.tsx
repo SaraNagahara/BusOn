@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { Link, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -11,19 +12,41 @@ import {
   ViewStyle,
 } from "react-native";
 import { AuthHeader } from "../../components/AuthHeader";
-import CardBranco from "../../components/CardBranco";
 import ButtonAzulPadrao from "../../components/buttonAzulPadrao";
+import CardBranco from "../../components/CardBranco";
 
-import { Link } from "expo-router";
 import { FundoAzul } from "../../components/fundoazul";
 import { Screen } from "../../components/safearea";
 
 type TabOption = "cadastrar" | "entrar";
 
 export default function LoginCadastro() {
+  const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState<TabOption>("entrar");
-  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
+
+  // Estados de visibilidade das senhas
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Estados dos formulários
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+
+  useEffect(() => {
+    if (params?.aceitou === "true") {
+      setActiveTab("cadastrar");
+      setAceitouTermos(true);
+    }
+  }, [params?.aceitou]);
 
   const activeShadow: ViewStyle = {
     elevation: 3,
@@ -33,22 +56,44 @@ export default function LoginCadastro() {
     shadowRadius: 2,
   };
 
+  const handleLogin = () => {
+    console.log("Dados de Login:", { loginEmail, loginPassword, rememberMe });
+  };
+
+  const handleRegister = () => {
+    if (registerPassword !== registerConfirmPassword) {
+      alert("As senhas não coincidem!");
+      return;
+    }
+    if (!aceitouTermos) {
+      alert(
+        "Você precisa aceitar os Termos de Uso e Políticas de Privacidade para prosseguir.",
+      );
+      return;
+    }
+    console.log("Dados de Cadastro:", {
+      registerName,
+      registerEmail,
+      registerPassword,
+      registerPhone,
+    });
+  };
+
   return (
     <FundoAzul>
-      {/* O <Screen> envolve tudo aqui dentro, garantindo que NADA passe das áreas seguras (nem em cima, nem embaixo) */}
       <Screen>
+        {/* Ajustado o KeyboardAvoidingView para abranger o comportamento correto no Android e iOS */}
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 20}
           className="flex-1"
         >
-          {/* Removemos qualquer margem negativa daqui. A View respeita o teto e o chão do celular */}
           <View className="flex-1 pt-4">
             <AuthHeader
               titulo="Comece Agora"
               subtitulo="Crie uma conta ou faça seu login"
             />
 
-            {/* Este container flex-1 limita o tamanho máximo que o CardBranco pode ter dentro da Safe Area */}
             <View className="flex-1">
               <CardBranco>
                 {/* SELETOR DE ABAS */}
@@ -81,8 +126,15 @@ export default function LoginCadastro() {
                 {/* ÁREA DE INPUTS */}
                 <View className="flex-1 px-2">
                   {activeTab === "entrar" ? (
-                    <View>
-                      {/* EMAIL */}
+                    /* ENTRAR (LOGIN) - CORRIGIDO COM SCROLLVIEW */
+                    <ScrollView
+                      showsVerticalScrollIndicator={false}
+                      contentContainerStyle={{ paddingBottom: 40 }}
+                      keyboardShouldPersistTaps="handled"
+                      keyboardDismissMode="on-drag"
+                      className="flex-1"
+                    >
+                      {/* EMAIL LOGIN */}
                       <View className="mb-5">
                         <Text className="text-black text-base mb-2 font-medium">
                           Email
@@ -94,11 +146,13 @@ export default function LoginCadastro() {
                             className="text-base text-black"
                             keyboardType="email-address"
                             autoCapitalize="none"
+                            value={loginEmail}
+                            onChangeText={setLoginEmail}
                           />
                         </View>
                       </View>
 
-                      {/* SENHA */}
+                      {/* SENHA LOGIN */}
                       <View className="mb-5">
                         <Text className="text-black text-base mb-2 font-medium">
                           Senha
@@ -108,14 +162,21 @@ export default function LoginCadastro() {
                             placeholder="Insira sua senha"
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black flex-1"
-                            secureTextEntry={!showPassword}
+                            secureTextEntry={!showLoginPassword}
+                            autoCapitalize="none"
+                            value={loginPassword}
+                            onChangeText={setLoginPassword}
                           />
                           <TouchableOpacity
-                            onPress={() => setShowPassword(!showPassword)}
+                            onPress={() =>
+                              setShowLoginPassword(!showLoginPassword)
+                            }
                           >
                             <Ionicons
                               name={
-                                showPassword ? "eye-outline" : "eye-off-outline"
+                                showLoginPassword
+                                  ? "eye-outline"
+                                  : "eye-off-outline"
                               }
                               size={22}
                               color="#9CA3AF"
@@ -124,7 +185,7 @@ export default function LoginCadastro() {
                         </View>
                       </View>
 
-                      <View className="flex-row justify-between items-center mt-4 px-1 mb-6">
+                      <View className="flex-row justify-between items-center mt-2 px-1 mb-6">
                         <TouchableOpacity
                           onPress={() => setRememberMe(!rememberMe)}
                           className="flex-row items-center"
@@ -149,17 +210,15 @@ export default function LoginCadastro() {
                         </Link>
                       </View>
 
-                      <ButtonAzulPadrao
-                        titulo="Entrar"
-                        onPress={() => console.log("Login pressionado")}
-                      />
-                    </View>
+                      <ButtonAzulPadrao titulo="Entrar" onPress={handleLogin} />
+                    </ScrollView>
                   ) : (
-                    /* O ScrollView do cadastro rola perfeitamente aqui dentro, sem vazar */
+                    /* CADASTRO */
                     <ScrollView
                       showsVerticalScrollIndicator={true}
-                      contentContainerStyle={{ paddingBottom: 20 }}
+                      contentContainerStyle={{ paddingBottom: 120 }}
                       keyboardShouldPersistTaps="handled"
+                      keyboardDismissMode="on-drag"
                       className="flex-1"
                     >
                       {/* NOME */}
@@ -172,11 +231,13 @@ export default function LoginCadastro() {
                             placeholder="Digite seu nome"
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black"
+                            value={registerName}
+                            onChangeText={setRegisterName}
                           />
                         </View>
                       </View>
 
-                      {/* EMAIL */}
+                      {/* EMAIL CADASTRO */}
                       <View className="mb-4">
                         <Text className="text-black text-base mb-1 font-medium">
                           Email
@@ -188,11 +249,13 @@ export default function LoginCadastro() {
                             className="text-base text-black"
                             keyboardType="email-address"
                             autoCapitalize="none"
+                            value={registerEmail}
+                            onChangeText={setRegisterEmail}
                           />
                         </View>
                       </View>
 
-                      {/* SENHA */}
+                      {/* SENHA CADASTRO */}
                       <View className="mb-4">
                         <Text className="text-black text-base mb-1 font-medium">
                           Senha
@@ -202,14 +265,21 @@ export default function LoginCadastro() {
                             placeholder="Digite sua senha"
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black flex-1"
-                            secureTextEntry={!showPassword}
+                            secureTextEntry={!showRegisterPassword}
+                            autoCapitalize="none"
+                            value={registerPassword}
+                            onChangeText={setRegisterPassword}
                           />
                           <TouchableOpacity
-                            onPress={() => setShowPassword(!showPassword)}
+                            onPress={() =>
+                              setShowRegisterPassword(!showRegisterPassword)
+                            }
                           >
                             <Ionicons
                               name={
-                                showPassword ? "eye-outline" : "eye-off-outline"
+                                showRegisterPassword
+                                  ? "eye-outline"
+                                  : "eye-off-outline"
                               }
                               size={20}
                               color="#9CA3AF"
@@ -225,17 +295,24 @@ export default function LoginCadastro() {
                         </Text>
                         <View className="border border-gray-200 rounded-2xl px-4 py-3 bg-white flex-row items-center">
                           <TextInput
-                            placeholder="Digite sua senha"
+                            placeholder="Confirme sua senha"
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black flex-1"
-                            secureTextEntry={!showPassword}
+                            secureTextEntry={!showConfirmPassword}
+                            autoCapitalize="none"
+                            value={registerConfirmPassword}
+                            onChangeText={setRegisterConfirmPassword}
                           />
                           <TouchableOpacity
-                            onPress={() => setShowPassword(!showPassword)}
+                            onPress={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                           >
                             <Ionicons
                               name={
-                                showPassword ? "eye-outline" : "eye-off-outline"
+                                showConfirmPassword
+                                  ? "eye-outline"
+                                  : "eye-off-outline"
                               }
                               size={20}
                               color="#9CA3AF"
@@ -245,7 +322,7 @@ export default function LoginCadastro() {
                       </View>
 
                       {/* TELEFONE */}
-                      <View className="mb-6">
+                      <View className="mb-4">
                         <Text className="text-black text-base mb-1 font-medium">
                           Telefone
                         </Text>
@@ -255,13 +332,15 @@ export default function LoginCadastro() {
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black flex-1"
                             keyboardType="phone-pad"
+                            value={registerPhone}
+                            onChangeText={setRegisterPhone}
                           />
                         </View>
                       </View>
 
                       <ButtonAzulPadrao
                         titulo="Cadastrar"
-                        onPress={() => console.log("Cadastro pressionado")}
+                        onPress={handleRegister}
                       />
                     </ScrollView>
                   )}
