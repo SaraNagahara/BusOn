@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Text, TextInput, View } from "react-native";
-import { AuthHeader } from "../../components/AuthHeader";
-import ButtonAzulPadrao from "../../components/buttonAzulPadrao";
-import CardBranco from "../../components/CardBranco";
-import { FundoAzul } from "../../components/fundoazul";
-import { Screen } from "../../components/safearea";
-import { TituloCustomizado } from "../../components/TituloCustomizado";
+import { AuthHeader } from "./../../components/AuthHeader";
+import ButtonAzulPadrao from "./../../components/buttonAzulPadrao";
+import CardBranco from "./../../components/CardBranco";
+import { FundoAzul } from "./../../components/fundoazul";
+import { Screen } from "./../../components/safearea";
+import { TituloCustomizado } from "./../../components/TituloCustomizado";
 export default function RecuperarSenha() {
   const router = useRouter(); //ta sendo usado so pra usar o botao pra navegar entre as paginas no momento
   return (

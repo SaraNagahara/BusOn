@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
-import { fonts } from "../../buson/app/_layout";
+import { fonts } from "./../app/_layout";
 
 interface TituloCustomizadoAzulProps {
   titulo: string; // O texto que você quer exibir (ex: "Recupere seu Acesso")

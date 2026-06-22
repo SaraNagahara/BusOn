@@ -2,8 +2,8 @@ import { Text, TextInput, View } from "react-native";
 import LogoApp from "../../assets/icons/logoApp.svg";
 import SetaBrancaEsquerda from "../../assets/icons/setaBrancaEsquerda.svg";
 
-import { Screen } from "../../components/safearea";
 import { fonts } from "../_layout";
+import { Screen } from "./../../components/safearea";
 
 export default function Login() {
   return (

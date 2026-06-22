@@ -1,13 +1,13 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { AuthHeader } from "../../components/AuthHeader";
-import ButtonAzulPadrao from "../../components/buttonAzulPadrao";
-import CardBranco from "../../components/CardBranco";
-import { FundoAzul } from "../../components/fundoazul";
-import PasswordInputField from "../../components/PasswordInputField";
-import { Screen } from "../../components/safearea";
-import { TituloCustomizado } from "../../components/TituloCustomizado";
+import { AuthHeader } from "./../../components/AuthHeader";
+import ButtonAzulPadrao from "./../../components/buttonAzulPadrao";
+import CardBranco from "./../../components/CardBranco";
+import { FundoAzul } from "./../../components/fundoazul";
+import PasswordInputField from "./../../components/PasswordInputField";
+import { Screen } from "./../../components/safearea";
+import { TituloCustomizado } from "./../../components/TituloCustomizado";
 export default function RecuperarSenha() {
   // Estados para as senhas
   const [newPassword, setNewPassword] = useState("");

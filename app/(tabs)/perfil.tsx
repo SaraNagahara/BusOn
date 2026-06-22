@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { Screen } from "../../components/safearea";
+import { Screen } from "./../../components/safearea";
 
 export default function Perfil() {
   return (
