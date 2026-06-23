@@ -1,12 +1,12 @@
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    Pressable,
-    ScrollView,
-    Text,
-    View,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
 import { FundoAzul } from "../../components/fundoazul";
 import { Screen } from "./../../components/safearea";
@@ -132,7 +132,7 @@ export default function termosDeUso() {
             {/* ÁREA DOS BOTÕES DE AÇÃO: Rola junto com o texto e fica na base do documento */}
             <View className="items-center mt-8 mb-6 w-full gap-y-3">
               {/* BOTÃO AZUL DE ACEITAÇÃO */}
-              <Pressable
+              {/* <Pressable
                 onPress={() => {
                   // Retorna para a página index injetando o parâmetro do checkbox preenchido
                   router.replace({
@@ -153,7 +153,7 @@ export default function termosDeUso() {
                 >
                   Aceitar e Continuar
                 </Text>
-              </Pressable>
+              </Pressable> */}
 
               {/* LINK PARA SAIR DA TELA */}
               <View className="mb-5">

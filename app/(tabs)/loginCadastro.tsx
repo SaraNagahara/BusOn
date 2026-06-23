@@ -162,7 +162,7 @@ export default function LoginCadastro() {
                             placeholder="Insira sua senha"
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black flex-1"
-                            secureTextEntry={!showLoginPassword}
+                            secureTextEntry={!showLoginPassword} // Ajustado dinamicamente para alternar de verdade
                             autoCapitalize="none"
                             value={loginPassword}
                             onChangeText={setLoginPassword}

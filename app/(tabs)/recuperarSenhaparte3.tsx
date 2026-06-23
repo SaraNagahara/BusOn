@@ -72,7 +72,7 @@ export default function RecuperarSenha() {
                   />
 
                   {/* Exibir mensagem de erro de validação */}
-                  {errorMessage && (
+                  {errorMessage && newPassword !== "" && (
                     <Text className="text-sm text-red-500 mt-2 px-1">
                       {errorMessage}
                     </Text>
