@@ -5,6 +5,9 @@ const User = require("./src/models/User");
 const Bus_schedules = require("./src/models/Bus_schedules");
 const PasswordReset = require("./src/models/PasswordReset");
 
+console.log("SMTP_USER:", process.env.SMTP_USER);
+console.log("SMTP_HOST:", process.env.SMTP_HOST);
+console.log("SMTP_PORT:", process.env.SMTP_PORT);
 // Criar e ajustar as tabelas do 0, cuidado com isso prq ele apaga todos dados, em produção iremos tirar.
 // db.sync({ alter: true }) 
 //   .then();

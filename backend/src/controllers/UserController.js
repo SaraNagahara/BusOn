@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { generatePin, hashPin } = require("../validators/validators");
 const PasswordReset = require("../models/PasswordReset");
+const EmailService = require("../services/emailService");
 
 module.exports = class UserController {
   static async register(req, res) {
@@ -129,45 +130,59 @@ module.exports = class UserController {
     });
   }
 
-  // Esqueceu senha.
+  // Forgot Password
   static async forgotPassword(req, res) {
     const email = req.body.email.trim().toLowerCase();
 
+    // camada de segurança extra
+    if (!email) {
+      return res.status(400).json({
+        message: "Email é obrigatório.",
+      });
+    }
+
     try {
+      // Verificar se o usuário existe
       const user = await User.findOne({ where: { email } });
 
       if (!user) {
         return res.json({
-          message: "Se o email existir, um código foi enviado.", // Fiquei sabendo que é uma boa pratica pro pessoal n ficar chutando email pra saber se existe.
+          message: "Se o email existir, um código foi enviado.",
         });
       }
-
-      // gerando o token!
+   
+        // gerar e Criptografar Pin
       const pin = generatePin();
       const pinHash = hashPin(pin);
 
-      // se criar um token novo n tem prq deixar token acomulado, essa função apaga tokens antigos
+        // Limpa do banco qualquer pedido anterior de recuperação pendente para este usuário
       await PasswordReset.destroy({
         where: {
           user_id: user.id,
         },
       });
-
-      // salvar em passwordReset o id do usuário, o pin com hash e tempo de expiração que está 10 minutos.
+  
+       // Dispara o e-mail contendo o PIN limpo e renderiza o template HTML (via Brevo)
       await PasswordReset.create({
         user_id: user.id,
         pin_hash: pinHash,
         expires_at: new Date(Date.now() + 10 * 60 * 1000),
       });
 
+       // Dispara o e-mail contendo o PIN limpo e renderiza o template html em (Service: emailServices)
+      await EmailService.sendRecoveryPin({
+        email: user.email,
+        name: user.name,
+        pin,
+      });
+
       return res.json({
-        message: "Codigo enviado com sucesso!.",
-        UserName: user.name,
-        Email: user.email,
-        PIN: pin, // Apenas para fim de teste, preciso remover.
+        message: "Código enviado com sucesso!",
       });
     } catch (err) {
-      return res.status(500).json({ message: err.message });
+      return res.status(500).json({
+        message: err.message,
+      });
     }
   }
 
@@ -241,6 +256,9 @@ module.exports = class UserController {
         message: err.message,
       });
     }
+
+    console.log("Enviando email para:", email);
+    console.log("PIN:", pin);
   }
 
   static async resetPassword(req, res) {
