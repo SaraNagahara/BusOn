@@ -11,6 +11,7 @@ export interface RotaFavoritaProps {
 interface RotasFavoritasProps {
   estaLogado: boolean;
   rotasFavoritas?: RotaFavoritaProps[];
+  filtroOrigem: "rodoviaria" | "destino";
   aoClicarAdicionarFavorita: () => void;
   aoClicarNaRota?: (rota: RotaFavoritaProps) => void;
 }
@@ -18,12 +19,11 @@ interface RotasFavoritasProps {
 export function RotasFavoritas({
   estaLogado,
   rotasFavoritas = [],
+  filtroOrigem,
   aoClicarAdicionarFavorita,
   aoClicarNaRota,
 }: RotasFavoritasProps) {
   const temRotas = estaLogado && rotasFavoritas.length > 0;
-
-  // Garante o limite de até 5 itens
   const rotasLimitadas = rotasFavoritas.slice(0, 5);
 
   const renderItem = ({ item }: { item: RotaFavoritaProps }) => (
@@ -54,20 +54,35 @@ export function RotasFavoritas({
   );
 
   return (
-    // Removido flex-1 daqui para o título não flutuar e quebrar o layout
-    <View className="w-full mt-4 mb-2">
-      {/* TÍTULO FIXO */}
-      <Text
-        style={{ fontFamily: fonts.bold }}
-        className="text-[#000000] text-xl tracking-tight mb-3 px-1"
-      >
-        Minhas rotas favoritas
-      </Text>
+    <View className="w-full mt-5 mb-2">
+      {/* HEADER DO BLOCO */}
+      <View className="flex-row items-center justify-between mb-3 px-1">
+        <Text
+          style={{ fontFamily: fonts.bold }}
+          className="text-[#000000] text-xl tracking-tight"
+        >
+          Minhas rotas favoritas
+        </Text>
+
+        {/* INDICADOR DE CONTEXTO (Estilo pílula do seletor, mas flat/informativo) */}
+        <View className="bg-[#E2E8F0] px-3 py-1.5 rounded-full flex-row items-center gap-1.5">
+          {/* Ícone sutil para reforçar que é informativo */}
+          <Ionicons
+            name={filtroOrigem === "rodoviaria" ? "location" : "home"}
+            size={12}
+            color="#475569"
+          />
+          <Text
+            style={{ fontFamily: fonts.bold }}
+            className="text-[#475569] text-xs uppercase tracking-wider"
+          >
+            {filtroOrigem === "rodoviaria" ? "Rodoviária" : "Destino"}
+          </Text>
+        </View>
+      </View>
 
       {/* CONTAINER PRINCIPAL CINZA */}
-      {/* Mudamos para h-[240px] (ou h-60). Isso limita o tamanho do bloco para caber de 3 a 4 itens visíveis por vez. O 5º item vai exigir o scroll! */}
       <View className="w-full bg-[#F2F4F7] rounded-2xl p-4 h-[240px] justify-center overflow-hidden">
-        {/* ESTADO 1: Vazio ou Não Logado */}
         {!temRotas && (
           <View className="items-center justify-center flex-col py-4">
             <View className="w-14 h-14 bg-white rounded-full items-center justify-center mb-3 flex-row">
@@ -95,15 +110,14 @@ export function RotasFavoritas({
           </View>
         )}
 
-        {/* ESTADO 2: Logado e com Rotas (SÓ ESTE BLOCO SCROLLA) */}
         {temRotas && (
           <FlatList
             data={rotasLimitadas}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={true} // Ativei a barra para você ver o scroll acontecendo
+            showsVerticalScrollIndicator={true}
             contentContainerStyle={{ gap: 8 }}
-            nestedScrollEnabled={true} // Evita travar o toque em algumas versões do Android
+            nestedScrollEnabled={true}
           />
         )}
       </View>

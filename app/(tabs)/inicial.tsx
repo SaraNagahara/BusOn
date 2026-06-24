@@ -1,62 +1,237 @@
 import { CarrosselRotas } from "@/components/CarrosselRotas";
+import { FiltroBusca, TipoLinhaOpcoes } from "@/components/FiltroBusca";
 import { HomeHeader } from "@/components/HomeHeader";
+import {
+  ListaResultadosBusca,
+  RotaResultadoProps,
+} from "@/components/ListaResultadosBusca";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
 import { RotaFavoritaProps, RotasFavoritas } from "@/components/RotasFavoritas";
 import { SearchBar } from "@/components/searchBar";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 import {
   FiltroOpcoes,
   ProximasSaidas,
 } from "./../../components/proximasSaidasFiltro";
 import { Screen } from "./../../components/safearea";
+import { TituloFiltro } from "./../../components/TituloFiltro";
+import { fonts } from "./../_layout";
+
+interface RotaFavoritaDinamicaProps {
+  id: string;
+  destino: string;
+  horarioRodoviaria: string;
+  horarioDestino: string;
+}
+
+// Copiado aqui apenas para referência de filtro dentro da Inicial
+const ROTAS_FICTICIAS: RotaResultadoProps[] = [
+  {
+    id: "1",
+    destino: "Canguera",
+    origem: "Terminal de São Roque",
+    proximoHorario: "18:10",
+    tipo: "urbanas",
+  },
+  {
+    id: "2",
+    destino: "Sorocaba",
+    origem: "Terminal de São Roque",
+    proximoHorario: "16:10",
+    tipo: "intermunicipais",
+  },
+  {
+    id: "3",
+    destino: "Guaçu",
+    origem: "Terminal de São Roque",
+    proximoHorario: "17:35",
+    tipo: "urbanas",
+  },
+  {
+    id: "4",
+    destino: "Mairinque",
+    origem: "Terminal de São Roque",
+    proximoHorario: "15:45",
+    tipo: "intermunicipais",
+  },
+  {
+    id: "5",
+    destino: "Mailasqui",
+    origem: "Terminal de São Roque",
+    proximoHorario: "19:00",
+    tipo: "urbanas",
+  },
+  {
+    id: "6",
+    destino: "São João novo",
+    origem: "Terminal de São Roque",
+    proximoHorario: "20:15",
+    tipo: "urbanas",
+  },
+  {
+    id: "7",
+    destino: "São Paulo",
+    origem: "Terminal de São Roque",
+    proximoHorario: "06:30",
+    tipo: "intermunicipais",
+  },
+  {
+    id: "8",
+    destino: "Ibiúna",
+    origem: "Terminal de São Roque",
+    proximoHorario: "21:40",
+    tipo: "intermunicipais",
+  },
+];
 
 export default function Inicial() {
   const router = useRouter();
+  const searchBarRef = useRef<TextInput>(null);
 
   const [abaAtual, setAbaAtual] = useState<TabOpcoes>("home");
   const [busca, setBusca] = useState("");
   const [filtroSelecionado, setFiltroSelecionado] =
     useState<FiltroOpcoes>("rodoviaria");
 
-  // Mantido em false para testar o redirecionamento do usuário deslogado
-  const [usuarioLogado, setUsuarioLogado] = useState(true);
+  const [filtroBuscaAtivo, setFiltroBuscaAtivo] =
+    useState<TipoLinhaOpcoes>("todas");
+  const [estaBuscando, setEstaBuscando] = useState(false);
 
-  const [meusFavoritos, setMeusFavoritos] = useState<RotaFavoritaProps[]>([
-    { id: "f1", destino: "Guaçu", horario: "16:15" },
-    { id: "f2", destino: "Canguera", horario: "16:30" },
-    { id: "f3", destino: "Mailasqui", horario: "17:40" },
-    { id: "f4", destino: "S. João novo", horario: "18:00" },
-    { id: "f5", destino: "Sorocaba", horario: "19:15" },
-  ]);
+  // CONTROLE DE LOGIN
+  const [usuarioLogado, setUsuarioLogado] = useState(false);
 
+  // Inicializa vazio para favoritos
+  const [meusFavoritos, setMeusFavoritos] = useState<
+    RotaFavoritaDinamicaProps[]
+  >([]);
+
+  // Regra de segurança para logout
+  useEffect(() => {
+    if (!usuarioLogado) {
+      setMeusFavoritos([]);
+    }
+  }, [usuarioLogado]);
+
+  // Histórico de buscas do Carrossel (inicia com os padrões)
   const [recentesRodoviaria, setRecentesRodoviaria] = useState<
     RotaFavoritaProps[]
   >([
-    { id: "rr1", destino: "Mailasqui", horario: "14:20" },
-    { id: "rr2", destino: "Canguera", horario: "15:10" },
-    { id: "rr3", destino: "Guaçu", horario: "16:00" },
-    { id: "rr4", destino: "S. João novo", horario: "16:45" },
+    { id: "1", destino: "S. João novo", horario: "15:30" },
+    { id: "2", destino: "Guaçu", horario: "15:55" },
+    { id: "3", destino: "Canguera", horario: "15:40" },
+    { id: "4", destino: "Mailasqui", horario: "16:15" },
   ]);
 
   const [recentesDestino, setRecentesDestino] = useState<RotaFavoritaProps[]>([
-    { id: "rd1", destino: "Sorocaba", horario: "12:30" },
-    { id: "rd2", destino: "São Paulo", horario: "13:45" },
-    { id: "rd3", destino: "Mairinque", horario: "17:15" },
-    { id: "rd4", destino: "Ibiúna", horario: "18:50" },
+    { id: "d1", destino: "Sorocaba", horario: "17:00" },
+    { id: "d2", destino: "Mairinque", horario: "17:45" },
+    { id: "d3", destino: "São Paulo", horario: "18:20" },
+    { id: "d4", destino: "Ibiúna", horario: "19:10" },
   ]);
 
-  // ALTERADO AQUI: Lógica de clique direcionando para a nova tela baseada na image_42084a.png
+  // Nova lógica: Monitora a digitação e adiciona automaticamente se encontrar somente UMA rota correspondente
+  useEffect(() => {
+    if (busca.trim().length === 0) return;
+
+    // Filtra baseado no que está digitado no momento
+    const rotasFiltradas = ROTAS_FICTICIAS.filter((rota) => {
+      const atendeCategoria =
+        filtroBuscaAtivo === "todas" || rota.tipo === filtroBuscaAtivo;
+      const atendeBusca = rota.destino
+        .toLowerCase()
+        .includes(busca.toLowerCase());
+      return atendeCategoria && atendeBusca;
+    });
+
+    // REGRA SOLICITADA: Se aparecer somente UMA rota no filtro, ela vai direto para o histórico
+    if (rotasFiltradas.length === 1) {
+      const rotaEncontrada = rotasFiltradas[0];
+
+      const novaRotaRecente: RotaFavoritaProps = {
+        id: `auto_${Date.now()}`,
+        destino: rotaEncontrada.destino,
+        horario: rotaEncontrada.proximoHorario,
+      };
+
+      if (filtroSelecionado === "rodoviaria") {
+        setRecentesRodoviaria((prev) => {
+          const filtrados = prev.filter(
+            (item) =>
+              item.destino.toLowerCase() !==
+              rotaEncontrada.destino.toLowerCase(),
+          );
+          return [novaRotaRecente, ...filtrados]; // Joga para o carrossel na posição 0
+        });
+      } else {
+        setRecentesDestino((prev) => {
+          const filtrados = prev.filter(
+            (item) =>
+              item.destino.toLowerCase() !==
+              rotaEncontrada.destino.toLowerCase(),
+          );
+          return [novaRotaRecente, ...filtrados];
+        });
+      }
+    }
+  }, [busca, filtroBuscaAtivo]); // Executa toda vez que o usuário digita ou muda o filtro de busca
+
+  // Mapeamento dos favoritos para o layout
+  const favoritosFiltrados: RotaFavoritaProps[] = meusFavoritos.map((rota) => ({
+    id: rota.id,
+    destino: rota.destino,
+    horario:
+      filtroSelecionado === "rodoviaria"
+        ? rota.horarioRodoviaria
+        : rota.horarioDestino,
+  }));
+
+  const listaFavoritosIds = meusFavoritos.map((f) => f.id);
+
+  // INTERAÇÃO DE FAVORITAR NO CORAÇÃO
+  const handleAlternarFavorito = (id: string, destino: string) => {
+    if (!usuarioLogado) {
+      router.push("/SolicitarConta");
+      return;
+    }
+
+    if (listaFavoritosIds.includes(id)) {
+      setMeusFavoritos((prev) => prev.filter((item) => item.id !== id));
+    } else {
+      const novoFavorito: RotaFavoritaDinamicaProps = {
+        id: id,
+        destino: destino,
+        horarioRodoviaria: "18:20",
+        horarioDestino: "09:45",
+      };
+      setMeusFavoritos((prev) => [...prev, novoFavorito]);
+    }
+  };
+
+  // Clique manual na lista (caso o usuário queira fechar a busca clicando)
+  const handleSelecionarRotaManual = (rota: any) => {
+    handleSairDaBusca();
+  };
+
+  // INTERAÇÃO DO BOTÃO "ADICIONAR FAVORITA"
   const handleAdicionarFavorita = () => {
     if (!usuarioLogado) {
-      console.log("Usuário deslogado! Redirecionando para criar conta...");
-
-      // Insira o caminho exato do arquivo que você criou (ex: /solicitar-conta, /auth/aviso)
       router.push("/SolicitarConta");
     } else {
-      console.log("Abrir tela de escolher rota para favoritar");
+      setEstaBuscando(true);
+      setTimeout(() => {
+        searchBarRef.current?.focus();
+      }, 100);
     }
+  };
+
+  const handleSairDaBusca = () => {
+    searchBarRef.current?.blur();
+    setBusca("");
+    setEstaBuscando(false);
+    setFiltroBuscaAtivo("todas");
   };
 
   return (
@@ -64,38 +239,77 @@ export default function Inicial() {
       <Screen>
         <View className="flex-1 px-4 pb-2">
           <HomeHeader subtitulo="Qual o seu destino de hoje ?" />
-          <SearchBar value={busca} onChangeText={(txt) => setBusca(txt)} />
 
-          <ProximasSaidas
-            filtroAtivo={filtroSelecionado}
-            aoMudarFiltro={(novoFiltro) => setFiltroSelecionado(novoFiltro)}
-          />
-
-          <CarrosselRotas
-            filtro={filtroSelecionado}
-            estaLogado={usuarioLogado}
-            recentesRodoviaria={recentesRodoviaria}
-            recentesDestino={recentesDestino}
-            aoClicarNaRota={(rota) =>
-              console.log("Clicou recente:", rota.destino)
-            }
-          />
-
-          <RotasFavoritas
-            estaLogado={usuarioLogado}
-            rotasFavoritas={meusFavoritos}
-            aoClicarAdicionarFavorita={handleAdicionarFavorita} // Propriedade acionando a função corrigida
-            aoClicarNaRota={(rota) => {
-              router.push({
-                pathname: "/detalhesDaRota",
-                params: {
-                  id: rota.id,
-                  destino: rota.destino,
-                  horario: rota.horario,
-                },
-              });
+          <SearchBar
+            inputRef={searchBarRef}
+            value={busca}
+            onFocus={() => setEstaBuscando(true)}
+            onChangeText={(txt) => {
+              setBusca(txt);
+              if (txt.length === 0) setEstaBuscando(true);
             }}
           />
+
+          {estaBuscando ? (
+            <View className="flex-1 mt-4">
+              <Pressable
+                onPress={handleSairDaBusca}
+                className="flex-row items-center gap-2 mb-2 active:opacity-70"
+              >
+                <Ionicons name="arrow-back" size={20} color="#64748B" />
+                <Text
+                  style={{ fontFamily: fonts.medium }}
+                  className="text-[#64748B] text-base"
+                >
+                  Voltar para o início
+                </Text>
+              </Pressable>
+
+              <FiltroBusca
+                filtroAtivo={filtroBuscaAtivo}
+                aoMudarFiltro={(novoFiltro) => setFiltroBuscaAtivo(novoFiltro)}
+              />
+
+              <TituloFiltro filtroAtivo={filtroBuscaAtivo} />
+
+              <View className="flex-1 mt-2">
+                <ListaResultadosBusca
+                  filtroCategoria={filtroBuscaAtivo}
+                  textoBusca={busca}
+                  listaFavoritosIds={listaFavoritosIds}
+                  aoAlternarFavorito={handleAlternarFavorito}
+                  aoClicarNaRota={handleSelecionarRotaManual}
+                />
+              </View>
+            </View>
+          ) : (
+            <View className="flex-1">
+              <ProximasSaidas
+                filtroAtivo={filtroSelecionado}
+                aoMudarFiltro={(novoFiltro) => setFiltroSelecionado(novoFiltro)}
+              />
+
+              <CarrosselRotas
+                filtro={filtroSelecionado}
+                estaLogado={usuarioLogado}
+                recentesRodoviaria={recentesRodoviaria}
+                recentesDestino={recentesDestino}
+                aoClicarNaRota={(rota) =>
+                  console.log("Clicou recente:", rota.destino)
+                }
+              />
+
+              <RotasFavoritas
+                estaLogado={usuarioLogado}
+                rotasFavoritas={favoritosFiltrados}
+                filtroOrigem={filtroSelecionado}
+                aoClicarAdicionarFavorita={handleAdicionarFavorita}
+                aoClicarNaRota={(rota) =>
+                  console.log("Clicou favorito:", rota.destino)
+                }
+              />
+            </View>
+          )}
         </View>
 
         <MenuFooter
