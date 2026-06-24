@@ -2,6 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { fonts } from "../app/_layout";
 
+// IMPORTAÇÃO DA INTERFACE DA FONTE DE DADOS UNIFICADA 👈
+// Caso queira usar exatamente o formato do mock, podemos usar a que está lá.
+// Se mantiver esta aqui, garanta que os dados enviados pelo pai tenham esse exato formato.
 export interface RotaProps {
   id: string;
   destino: string;
@@ -11,8 +14,8 @@ export interface RotaProps {
 interface CarrosselRotasProps {
   filtro: "rodoviaria" | "destino";
   estaLogado: boolean;
-  recentesRodoviaria?: RotaProps[]; // Histórico dinâmico da Rodoviária enviado pelo Pai
-  recentesDestino?: RotaProps[]; // Histórico dinâmico de Destinos enviado pelo Pai
+  recentesRodoviaria?: RotaProps[]; // Histórico dinâmico enviado pela inicial.tsx (que já usa o ROTAS_MOCK)
+  recentesDestino?: RotaProps[]; // Histórico dinâmico enviado pela inicial.tsx (que já usa o ROTAS_MOCK)
   aoClicarNaRota?: (rota: RotaProps) => void;
 }
 
@@ -23,7 +26,7 @@ export function CarrosselRotas({
   recentesDestino = [],
   aoClicarNaRota,
 }: CarrosselRotasProps) {
-  // O carrossel agora usa estritamente o histórico dinâmico enviado pela Inicial.tsx
+  // O carrossel renderiza o histórico dinâmico e filtrado que a inicial.tsx montou do arquivo central
   const dadosAtuais =
     filtro === "rodoviaria" ? recentesRodoviaria : recentesDestino;
 
@@ -32,11 +35,7 @@ export function CarrosselRotas({
       onPress={() => aoClicarNaRota?.(item)}
       className="bg-[#2449AE] w-36 h-36 rounded-2xl p-4 flex-col active:opacity-80"
     >
-      <Ionicons
-        name="time-outline" // Mantém o ícone de histórico/tempo para ambos os estados de login
-        size={20}
-        color="#FFFFFF"
-      />
+      <Ionicons name="time-outline" size={20} color="#FFFFFF" />
 
       <View className="flex-col gap-0.5 mt-6">
         <Text
@@ -58,7 +57,6 @@ export function CarrosselRotas({
 
   return (
     <View className="w-full my-3">
-      {/* Texto de apoio adaptado para a experiência (Suas buscas / Histórico recente) */}
       <Text
         style={{ fontFamily: fonts.medium }}
         className="text-gray-500 text-sm mb-2 px-1"

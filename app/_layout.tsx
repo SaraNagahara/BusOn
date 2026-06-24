@@ -1,6 +1,7 @@
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { FavoritosProvider } from "../context/FavoritosProvider"; // 👈 IMPORTADO DO SEU NOVO CAMINHO
 
 import {
   Inter_400Regular,
@@ -36,11 +37,14 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      />
+      {/* 👈 ENVOLVEU TODO O APP: Salva os favoritos ao mudar de página pelo footer */}
+      <FavoritosProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        />
+      </FavoritosProvider>
     </SafeAreaProvider>
   );
 }

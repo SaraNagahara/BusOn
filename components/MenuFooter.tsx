@@ -25,7 +25,7 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
           <Ionicons
             name={abaAtiva === "home" ? "home" : "home-outline"}
             size={24}
-            color={abaAtiva === "home" ? "#3F5CC4" : "#3F5CC4"} // AJUSTADO: Hexadecimal puro (com opacidade opcional se estiver inativo)
+            color="#3F5CC4"
           />
           <Text
             style={{ fontFamily: fonts.regular }}
@@ -46,7 +46,7 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
           <Ionicons
             name={abaAtiva === "favoritas" ? "star" : "star-outline"}
             size={24}
-            color={abaAtiva === "favoritas" ? "#3F5CC4" : "#3F5CC4"} // AJUSTADO: Hexadecimal puro
+            color="#3F5CC4"
           />
           <Text
             style={{ fontFamily: fonts.regular }}
@@ -67,7 +67,7 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
           <Ionicons
             name={abaAtiva === "perfil" ? "person" : "person-outline"}
             size={24}
-            color={abaAtiva === "perfil" ? "#3F5CC4" : "#3F5CC4"} // AJUSTADO: Hexadecimal puro
+            color="#3F5CC4"
           />
           <Text
             style={{ fontFamily: fonts.regular }}
@@ -78,7 +78,7 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
         </Pressable>
       </View>
 
-      {/* Ajustado: Fundo branco combinando com o novo menu */}
+      {/* Espaçamento do sistema (iOS / Android) */}
       <View
         className="bg-white w-full"
         style={{

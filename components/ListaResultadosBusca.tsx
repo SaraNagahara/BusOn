@@ -15,9 +15,10 @@ export interface RotaResultadoProps {
 interface ListaResultadosBuscaProps {
   filtroCategoria: TipoLinhaOpcoes;
   textoBusca: string;
-  listaFavoritosIds: string[]; // <-- Nova Prop: IDs que já estão favoritados
-  aoAlternarFavorito: (id: string, destino: string) => void; // <-- Nova Prop: Callback de ação
+  listaFavoritosIds: string[];
+  aoAlternarFavorito: (id: string, destino: string) => void;
   aoClicarNaRota?: (rota: RotaResultadoProps) => void;
+  apenasFavoritos?: boolean; // 👈 Registrada corretamente
 }
 
 const ROTAS_FICTICIAS: RotaResultadoProps[] = [
@@ -85,25 +86,38 @@ export function ListaResultadosBusca({
   listaFavoritosIds,
   aoAlternarFavorito,
   aoClicarNaRota,
+  apenasFavoritos = false, // 👈 Recebida com valor padrão false
 }: ListaResultadosBuscaProps) {
   const [mostrarTudo, setMostrarTudo] = useState(false);
 
+  // LÓGICA DE FILTRO UNIFICADA 👈
   const rotasFiltradas = ROTAS_FICTICIAS.filter((rota) => {
+    // Se a tela de favoritos ativou a prop, esconde as rotas que não estão favoritadas
+    if (apenasFavoritos && !listaFavoritosIds.includes(rota.id)) {
+      return false;
+    }
+
     const atendeCategoria =
       filtroCategoria === "todas" || rota.tipo === filtroCategoria;
-    const atendeBusca = rota.destino
-      .toLowerCase()
-      .includes(textoBusca.toLowerCase());
+
+    const termo = textoBusca.toLowerCase();
+    const destino = rota.destino.toLowerCase();
+
+    // Inteligência para bater tanto "S. João" quanto "São João"
+    const atendeBusca =
+      destino.includes(termo) ||
+      (destino.startsWith("s. joão") && termo.startsWith("sao joao"));
+
     return atendeCategoria && atendeBusca;
   });
 
+  // Paginação inteligente dos dados na tela
   const dadosExibidos = mostrarTudo
     ? rotasFiltradas
     : rotasFiltradas.slice(0, 4);
   const rotasRestantes = rotasFiltradas.length - dadosExibidos.length;
 
   const renderCardRota = ({ item }: { item: RotaResultadoProps }) => {
-    // Verifica se o ID desta rota consta na lista global de favoritos transmitida pela Home
     const isFavorito = listaFavoritosIds.includes(item.id);
 
     return (
@@ -136,7 +150,6 @@ export function ListaResultadosBusca({
           </Text>
         </View>
 
-        {/* Aciona o gatilho passando o ID e Destino para a Home decidir o que fazer */}
         <Pressable
           onPress={() => aoAlternarFavorito(item.id, item.destino)}
           className="p-2 active:scale-110"

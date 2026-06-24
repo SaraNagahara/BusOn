@@ -1,91 +1,21 @@
 import { CarrosselRotas } from "@/components/CarrosselRotas";
 import { FiltroBusca, TipoLinhaOpcoes } from "@/components/FiltroBusca";
 import { HomeHeader } from "@/components/HomeHeader";
-import {
-  ListaResultadosBusca,
-  RotaResultadoProps,
-} from "@/components/ListaResultadosBusca";
+import { ListaResultadosBusca } from "@/components/ListaResultadosBusca";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
 import { RotaFavoritaProps, RotasFavoritas } from "@/components/RotasFavoritas";
 import { SearchBar } from "@/components/searchBar";
-import { Ionicons } from "@expo/vector-icons";
+import { TituloFiltro } from "@/components/TituloFiltro";
+import { ROTAS_MOCK } from "@/constants/rotasDados";
+import { useFavoritos } from "@/context/FavoritosProvider";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
 import {
   FiltroOpcoes,
   ProximasSaidas,
 } from "./../../components/proximasSaidasFiltro";
 import { Screen } from "./../../components/safearea";
-import { TituloFiltro } from "./../../components/TituloFiltro";
-import { fonts } from "./../_layout";
-
-interface RotaFavoritaDinamicaProps {
-  id: string;
-  destino: string;
-  horarioRodoviaria: string;
-  horarioDestino: string;
-}
-
-// Copiado aqui apenas para referência de filtro dentro da Inicial
-const ROTAS_FICTICIAS: RotaResultadoProps[] = [
-  {
-    id: "1",
-    destino: "Canguera",
-    origem: "Terminal de São Roque",
-    proximoHorario: "18:10",
-    tipo: "urbanas",
-  },
-  {
-    id: "2",
-    destino: "Sorocaba",
-    origem: "Terminal de São Roque",
-    proximoHorario: "16:10",
-    tipo: "intermunicipais",
-  },
-  {
-    id: "3",
-    destino: "Guaçu",
-    origem: "Terminal de São Roque",
-    proximoHorario: "17:35",
-    tipo: "urbanas",
-  },
-  {
-    id: "4",
-    destino: "Mairinque",
-    origem: "Terminal de São Roque",
-    proximoHorario: "15:45",
-    tipo: "intermunicipais",
-  },
-  {
-    id: "5",
-    destino: "Mailasqui",
-    origem: "Terminal de São Roque",
-    proximoHorario: "19:00",
-    tipo: "urbanas",
-  },
-  {
-    id: "6",
-    destino: "São João novo",
-    origem: "Terminal de São Roque",
-    proximoHorario: "20:15",
-    tipo: "urbanas",
-  },
-  {
-    id: "7",
-    destino: "São Paulo",
-    origem: "Terminal de São Roque",
-    proximoHorario: "06:30",
-    tipo: "intermunicipais",
-  },
-  {
-    id: "8",
-    destino: "Ibiúna",
-    origem: "Terminal de São Roque",
-    proximoHorario: "21:40",
-    tipo: "intermunicipais",
-  },
-];
 
 export default function Inicial() {
   const router = useRouter();
@@ -100,18 +30,43 @@ export default function Inicial() {
     useState<TipoLinhaOpcoes>("todas");
   const [estaBuscando, setEstaBuscando] = useState(false);
 
+  // CONTEXTO GLOBAL DE FAVORITOS 👈
+  const {
+    meusFavoritos,
+    listaFavoritosIds,
+    alternarFavorito,
+    limparFavoritos,
+  } = useFavoritos();
+
   // CONTROLE DE LOGIN
-  const [usuarioLogado, setUsuarioLogado] = useState(false);
+  const usuarioLogado = true; // Teste mudando para false
 
-  // Inicializa vazio para favoritos
-  const [meusFavoritos, setMeusFavoritos] = useState<
-    RotaFavoritaDinamicaProps[]
-  >([]);
+  // GERENCIAMENTO ÚNICO DO FOOTER COM VALIDAÇÃO DE SEGURANÇA
+  const handleNavegacaoFooter = (aba: TabOpcoes) => {
+    if (aba === "home") {
+      // SE JÁ ESTIVER BUSCANDO, APENAS FECHA A BUSCA EM VEZ DE RECARREGAR A PÁGINA!
+      if (estaBuscando) {
+        handleSairDaBusca();
+      }
+      return;
+    }
 
-  // Regra de segurança para logout
+    if (!usuarioLogado) {
+      router.push({
+        pathname: "/SolicitarConta",
+        params: { origem: aba },
+      });
+      return;
+    }
+
+    if (aba === "favoritas") router.push("/favoritos");
+    if (aba === "perfil") router.push("/perfil");
+  };
+
+  // Regra de segurança para logout usando a função de limpar global
   useEffect(() => {
     if (!usuarioLogado) {
-      setMeusFavoritos([]);
+      limparFavoritos();
     }
   }, [usuarioLogado]);
 
@@ -119,7 +74,7 @@ export default function Inicial() {
   const [recentesRodoviaria, setRecentesRodoviaria] = useState<
     RotaFavoritaProps[]
   >([
-    { id: "1", destino: "S. João novo", horario: "15:30" },
+    { id: "1", destino: "São João novo", horario: "15:30" },
     { id: "2", destino: "Guaçu", horario: "15:55" },
     { id: "3", destino: "Canguera", horario: "15:40" },
     { id: "4", destino: "Mailasqui", horario: "16:15" },
@@ -132,26 +87,31 @@ export default function Inicial() {
     { id: "d4", destino: "Ibiúna", horario: "19:10" },
   ]);
 
-  // Nova lógica: Monitora a digitação e adiciona automaticamente se encontrar somente UMA rota correspondente
+  // Lógica corrigida monitorando os dados vindos do ROTAS_MOCK unificado
   useEffect(() => {
     if (busca.trim().length === 0) return;
 
-    // Filtra baseado no que está digitado no momento
-    const rotasFiltradas = ROTAS_FICTICIAS.filter((rota) => {
+    const rotasFiltradas = ROTAS_MOCK.filter((rota) => {
       const atendeCategoria =
         filtroBuscaAtivo === "todas" || rota.tipo === filtroBuscaAtivo;
-      const atendeBusca = rota.destino
-        .toLowerCase()
-        .includes(busca.toLowerCase());
+
+      const termoBusca = busca.toLowerCase();
+      const destinoRota = rota.destino.toLowerCase();
+
+      // Inteligência para bater tanto "S. João" quanto "São João"
+      const atendeBusca =
+        destinoRota.includes(termoBusca) ||
+        (destinoRota.startsWith("s. joão") &&
+          termoBusca.startsWith("sao joao"));
+
       return atendeCategoria && atendeBusca;
     });
 
-    // REGRA SOLICITADA: Se aparecer somente UMA rota no filtro, ela vai direto para o histórico
     if (rotasFiltradas.length === 1) {
       const rotaEncontrada = rotasFiltradas[0];
 
       const novaRotaRecente: RotaFavoritaProps = {
-        id: `auto_${Date.now()}`,
+        id: `auto_${rotaEncontrada.id}_${Date.now()}`, // ID amarrado ao ID real da rota para não dar conflito
         destino: rotaEncontrada.destino,
         horario: rotaEncontrada.proximoHorario,
       };
@@ -163,7 +123,7 @@ export default function Inicial() {
               item.destino.toLowerCase() !==
               rotaEncontrada.destino.toLowerCase(),
           );
-          return [novaRotaRecente, ...filtrados]; // Joga para o carrossel na posição 0
+          return [novaRotaRecente, ...filtrados];
         });
       } else {
         setRecentesDestino((prev) => {
@@ -176,9 +136,9 @@ export default function Inicial() {
         });
       }
     }
-  }, [busca, filtroBuscaAtivo]); // Executa toda vez que o usuário digita ou muda o filtro de busca
+  }, [busca, filtroBuscaAtivo]);
 
-  // Mapeamento dos favoritos para o layout
+  // Mapeamento dos favoritos vindos do contexto para o layout da Home 👈
   const favoritosFiltrados: RotaFavoritaProps[] = meusFavoritos.map((rota) => ({
     id: rota.id,
     destino: rota.destino,
@@ -188,34 +148,19 @@ export default function Inicial() {
         : rota.horarioDestino,
   }));
 
-  const listaFavoritosIds = meusFavoritos.map((f) => f.id);
-
-  // INTERAÇÃO DE FAVORITAR NO CORAÇÃO
-  const handleAlternarFavorito = (id: string, destino: string) => {
+  // INTERAÇÃO DE FAVORITAR VIA CONTEXTO GLOBAL 👈
+  const handleAlternarFavoritoClick = (id: string, destino: string) => {
     if (!usuarioLogado) {
       router.push("/SolicitarConta");
       return;
     }
-
-    if (listaFavoritosIds.includes(id)) {
-      setMeusFavoritos((prev) => prev.filter((item) => item.id !== id));
-    } else {
-      const novoFavorito: RotaFavoritaDinamicaProps = {
-        id: id,
-        destino: destino,
-        horarioRodoviaria: "18:20",
-        horarioDestino: "09:45",
-      };
-      setMeusFavoritos((prev) => [...prev, novoFavorito]);
-    }
+    alternarFavorito(id, destino);
   };
 
-  // Clique manual na lista (caso o usuário queira fechar a busca clicando)
   const handleSelecionarRotaManual = (rota: any) => {
     handleSairDaBusca();
   };
 
-  // INTERAÇÃO DO BOTÃO "ADICIONAR FAVORITA"
   const handleAdicionarFavorita = () => {
     if (!usuarioLogado) {
       router.push("/SolicitarConta");
@@ -248,23 +193,11 @@ export default function Inicial() {
               setBusca(txt);
               if (txt.length === 0) setEstaBuscando(true);
             }}
+            aoLimpar={() => setEstaBuscando(false)} // 👈 PASSE ESSA LINHA AQUI!
           />
 
           {estaBuscando ? (
             <View className="flex-1 mt-4">
-              <Pressable
-                onPress={handleSairDaBusca}
-                className="flex-row items-center gap-2 mb-2 active:opacity-70"
-              >
-                <Ionicons name="arrow-back" size={20} color="#64748B" />
-                <Text
-                  style={{ fontFamily: fonts.medium }}
-                  className="text-[#64748B] text-base"
-                >
-                  Voltar para o início
-                </Text>
-              </Pressable>
-
               <FiltroBusca
                 filtroAtivo={filtroBuscaAtivo}
                 aoMudarFiltro={(novoFiltro) => setFiltroBuscaAtivo(novoFiltro)}
@@ -277,7 +210,7 @@ export default function Inicial() {
                   filtroCategoria={filtroBuscaAtivo}
                   textoBusca={busca}
                   listaFavoritosIds={listaFavoritosIds}
-                  aoAlternarFavorito={handleAlternarFavorito}
+                  aoAlternarFavorito={handleAlternarFavoritoClick}
                   aoClicarNaRota={handleSelecionarRotaManual}
                 />
               </View>
@@ -312,10 +245,7 @@ export default function Inicial() {
           )}
         </View>
 
-        <MenuFooter
-          abaAtiva={abaAtual}
-          aoMudarAba={(novaAba) => setAbaAtual(novaAba)}
-        />
+        <MenuFooter abaAtiva="home" aoMudarAba={handleNavegacaoFooter} />
       </Screen>
     </View>
   );
