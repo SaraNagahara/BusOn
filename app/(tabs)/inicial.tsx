@@ -10,7 +10,7 @@ import { ROTAS_MOCK } from "@/constants/rotasDados";
 import { useFavoritos } from "@/context/FavoritosProvider";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { TextInput, View } from "react-native";
+import { Alert, TextInput, View } from "react-native"; // 👈 Importado o Alert aqui
 import {
   FiltroOpcoes,
   ProximasSaidas,
@@ -148,13 +148,42 @@ export default function Inicial() {
         : rota.horarioDestino,
   }));
 
-  // INTERAÇÃO DE FAVORITAR VIA CONTEXTO GLOBAL 👈
+  // INTERAÇÃO DE FAVORITAR VIA CONTEXTO GLOBAL COM CONFIRMAÇÃO 👈
   const handleAlternarFavoritoClick = (id: string, destino: string) => {
     if (!usuarioLogado) {
       router.push("/SolicitarConta");
       return;
     }
-    alternarFavorito(id, destino);
+
+    const jaEFavorito = listaFavoritosIds.includes(id);
+
+    if (jaEFavorito) {
+      Alert.alert(
+        "Remover dos Favoritos",
+        `Tem certeza que deseja desfavoritar a linha ${destino}?`,
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Sim, remover",
+            style: "destructive",
+            onPress: () => alternarFavorito(id, destino),
+          },
+        ],
+      );
+    } else {
+      Alert.alert(
+        "Adicionar aos Favoritos",
+        `Deseja favoritar a linha ${destino}?`,
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Sim, favoritar",
+            style: "default",
+            onPress: () => alternarFavorito(id, destino),
+          },
+        ],
+      );
+    }
   };
 
   const handleSelecionarRotaManual = (rota: any) => {

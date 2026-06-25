@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { fonts } from "../app/_layout";
+import { useFavoritos } from "../context/FavoritosProvider"; // 👈 Mantendo a importação do context que gerencia os alertas
 import { TipoLinhaOpcoes } from "./FiltroBusca";
 
 export interface RotaResultadoProps {
@@ -18,7 +19,12 @@ interface ListaResultadosBuscaProps {
   listaFavoritosIds: string[];
   aoAlternarFavorito: (id: string, destino: string) => void;
   aoClicarNaRota?: (rota: RotaResultadoProps) => void;
-  apenasFavoritos?: boolean; // 👈 Registrada corretamente
+  apenasFavoritos?: boolean;
+  aoClicarNoAlerta?: (
+    idRota: string,
+    destino: string,
+    idAlerta: string | null,
+  ) => void; // 👈 Mantendo a assinatura para abrir o modal de alertas
 }
 
 const ROTAS_FICTICIAS: RotaResultadoProps[] = [
@@ -86,13 +92,13 @@ export function ListaResultadosBusca({
   listaFavoritosIds,
   aoAlternarFavorito,
   aoClicarNaRota,
-  apenasFavoritos = false, // 👈 Recebida com valor padrão false
+  apenasFavoritos = false,
+  aoClicarNoAlerta,
 }: ListaResultadosBuscaProps) {
   const [mostrarTudo, setMostrarTudo] = useState(false);
+  const { meusAlertas } = useFavoritos(); // 👈 Buscando os alertas salvos para o sininho
 
-  // LÓGICA DE FILTRO UNIFICADA 👈
   const rotasFiltradas = ROTAS_FICTICIAS.filter((rota) => {
-    // Se a tela de favoritos ativou a prop, esconde as rotas que não estão favoritadas
     if (apenasFavoritos && !listaFavoritosIds.includes(rota.id)) {
       return false;
     }
@@ -103,7 +109,6 @@ export function ListaResultadosBusca({
     const termo = textoBusca.toLowerCase();
     const destino = rota.destino.toLowerCase();
 
-    // Inteligência para bater tanto "S. João" quanto "São João"
     const atendeBusca =
       destino.includes(termo) ||
       (destino.startsWith("s. joão") && termo.startsWith("sao joao"));
@@ -111,7 +116,6 @@ export function ListaResultadosBusca({
     return atendeCategoria && atendeBusca;
   });
 
-  // Paginação inteligente dos dados na tela
   const dadosExibidos = mostrarTudo
     ? rotasFiltradas
     : rotasFiltradas.slice(0, 4);
@@ -119,6 +123,9 @@ export function ListaResultadosBusca({
 
   const renderCardRota = ({ item }: { item: RotaResultadoProps }) => {
     const isFavorito = listaFavoritosIds.includes(item.id);
+    const alertasDessaRota = meusAlertas.filter(
+      (alerta) => alerta.idRota === item.id,
+    );
 
     return (
       <Pressable
@@ -138,28 +145,83 @@ export function ListaResultadosBusca({
           </Text>
           <Text
             style={{ fontFamily: fonts.regular }}
-            className="text-[#64748B] text-sm mb-1.5"
+            className={`text-[#64748B] text-sm ${!apenasFavoritos ? "mb-1.5" : ""}`}
           >
             {item.origem}
           </Text>
-          <Text
-            style={{ fontFamily: fonts.medium }}
-            className="text-[#334155] text-sm"
-          >
-            Próximo as {item.proximoHorario}
-          </Text>
+
+          {/* ⏱️ HORÁRIO ORIGINAL: Exibido apenas na HOME */}
+          {!apenasFavoritos && (
+            <Text
+              style={{ fontFamily: fonts.medium }}
+              className="text-[#334155] text-sm"
+            >
+              Próximo as {item.proximoHorario}
+            </Text>
+          )}
+
+          {/* 🔔 EXIBIÇÃO COLETIVA DOS ALERTAS SALVOS: Apenas na tela de Favoritos */}
+          {apenasFavoritos && alertasDessaRota.length > 0 && (
+            <View className="flex-row gap-1.5 mt-2 flex-wrap">
+              {alertasDessaRota.map((alerta) => (
+                <Pressable
+                  key={alerta.idAlerta}
+                  onPress={() =>
+                    aoClicarNoAlerta?.(item.id, item.destino, alerta.idAlerta)
+                  }
+                  className="bg-amber-100/80 px-3 py-1 rounded-full flex-row items-center gap-1 active:opacity-60"
+                >
+                  <Ionicons name="notifications" size={12} color="#D97706" />
+                  <Text
+                    style={{ fontFamily: fonts.bold }}
+                    className="text-[#B45309] text-[11px]"
+                  >
+                    {alerta.horario}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
 
-        <Pressable
-          onPress={() => aoAlternarFavorito(item.id, item.destino)}
-          className="p-2 active:scale-110"
-        >
-          <Ionicons
-            name={isFavorito ? "heart" : "heart-outline"}
-            size={24}
-            color={isFavorito ? "#EF4444" : "#64748B"}
-          />
-        </Pressable>
+        {/* Controles do canto direito do Card */}
+        <View className="flex-row items-center gap-1">
+          {/* 🔔 SINO DE ALERTAS: Exibido apenas na tela de Favoritos */}
+          {apenasFavoritos && (
+            <Pressable
+              onPress={() => {
+                if (alertasDessaRota.length === 2) {
+                  aoClicarNoAlerta?.(item.id, item.destino, "REMOVER_TODOS");
+                } else {
+                  aoClicarNoAlerta?.(item.id, item.destino, null);
+                }
+              }}
+              className="p-2 active:scale-110"
+            >
+              <Ionicons
+                name={
+                  alertasDessaRota.length > 0
+                    ? "notifications"
+                    : "notifications-outline"
+                }
+                size={24}
+                color={alertasDessaRota.length > 0 ? "#D97706" : "#64748B"}
+              />
+            </Pressable>
+          )}
+
+          {/* ❤️ CORAÇÃO DE FAVORITOS: Disponível em ambos os ambientes */}
+          <Pressable
+            onPress={() => aoAlternarFavorito(item.id, item.destino)}
+            className="p-2 active:scale-110"
+          >
+            <Ionicons
+              name={isFavorito ? "heart" : "heart-outline"}
+              size={24}
+              color={isFavorito ? "#EF4444" : "#64748B"}
+            />
+          </Pressable>
+        </View>
       </Pressable>
     );
   };
@@ -182,7 +244,7 @@ export function ListaResultadosBusca({
                 style={{ fontFamily: fonts.bold }}
                 className="text-[#334155] text-xs uppercase tracking-wider"
               >
-                {rotasRestantes + dadosExibidos.length} linhas disponíveis
+                {rotasRestantes + dadosExibidos.length} lines disponíveis
               </Text>
             </Pressable>
           </View>
