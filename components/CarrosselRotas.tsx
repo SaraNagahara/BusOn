@@ -2,9 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { fonts } from "../app/_layout";
 
-// IMPORTAÇÃO DA INTERFACE DA FONTE DE DADOS UNIFICADA 👈
-// Caso queira usar exatamente o formato do mock, podemos usar a que está lá.
-// Se mantiver esta aqui, garanta que os dados enviados pelo pai tenham esse exato formato.
 export interface RotaProps {
   id: string;
   destino: string;
@@ -14,10 +11,39 @@ export interface RotaProps {
 interface CarrosselRotasProps {
   filtro: "rodoviaria" | "destino";
   estaLogado: boolean;
-  recentesRodoviaria?: RotaProps[]; // Histórico dinâmico enviado pela inicial.tsx (que já usa o ROTAS_MOCK)
-  recentesDestino?: RotaProps[]; // Histórico dinâmico enviado pela inicial.tsx (que já usa o ROTAS_MOCK)
+  recentesRodoviaria?: RotaProps[];
+  recentesDestino?: RotaProps[];
   aoClicarNaRota?: (rota: RotaProps) => void;
 }
+
+// 🌐 Função utilitária para obter a data/hora atual convertida estritamente para o Horário de Brasília (UTC-3)
+const obterDataBrasilia = (): Date => {
+  const agora = new Date();
+  const fusoBrasilia =
+    agora.getTime() + agora.getTimezoneOffset() * 60000 - 3 * 3600000;
+  return new Date(fusoBrasilia);
+};
+
+// 🕒 Função auxiliar para calcular a proximidade de um horário (HH:MM) com o Horário de Brasília atual
+const obterDiferencaMinutos = (horarioRota: string): number => {
+  const agoraBrasilia = obterDataBrasilia();
+  const [horasRota, minutosRota] =
+    horarioRota && horarioRota.includes(":")
+      ? horarioRota.split(":").map(Number)
+      : [0, 0];
+
+  const minutosAtuais =
+    agoraBrasilia.getHours() * 60 + agoraBrasilia.getMinutes();
+  const minutosDoOnibus = horasRota * 60 + minutosRota;
+
+  let diferenca = minutosDoOnibus - minutosAtuais;
+
+  if (diferenca < 0) {
+    diferenca += 24 * 60;
+  }
+
+  return diferenca;
+};
 
 export function CarrosselRotas({
   filtro,
@@ -29,6 +55,26 @@ export function CarrosselRotas({
   // O carrossel renderiza o histórico dinâmico e filtrado que a inicial.tsx montou do arquivo central
   const dadosAtuais =
     filtro === "rodoviaria" ? recentesRodoviaria : recentesDestino;
+
+  // 🔄 Ordenação Inteligente: Mantém a busca recente no topo e ordena o resto por horário
+  const dadosOrdenados = [...dadosAtuais].sort((a, b) => {
+    const aEBuscaRecente = a.id.startsWith("auto_");
+    const bEBuscaRecente = b.id.startsWith("auto_");
+
+    // Se "a" for uma busca recente do usuário e "b" não, "a" fica primeiro
+    if (aEBuscaRecente && !bEBuscaRecente) return -1;
+    if (!aEBuscaRecente && bEBuscaRecente) return 1;
+
+    // Se ambos forem buscas recentes, o mais novo (timestamp maior no final do ID) fica primeiro
+    if (aEBuscaRecente && bEBuscaRecente) {
+      const timestampA = Number(a.id.split("_")[2]) || 0;
+      const timestampB = Number(b.id.split("_")[2]) || 0;
+      return timestampB - timestampA;
+    }
+
+    // Caso nenhum seja busca recente (ex: dados iniciais/mock), ordena pelo horário mais próximo de Brasília
+    return obterDiferencaMinutos(a.horario) - obterDiferencaMinutos(b.horario);
+  });
 
   const renderCard = ({ item }: { item: RotaProps }) => (
     <Pressable
@@ -69,7 +115,7 @@ export function CarrosselRotas({
       </Text>
 
       <FlatList
-        data={dadosAtuais}
+        data={dadosOrdenados}
         renderItem={renderCard}
         keyExtractor={(item) => item.id}
         horizontal

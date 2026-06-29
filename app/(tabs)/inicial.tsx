@@ -10,12 +10,20 @@ import { ROTAS_MOCK } from "@/constants/rotasDados";
 import { useFavoritos } from "@/context/FavoritosProvider";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Alert, TextInput, View } from "react-native"; // 👈 Importado o Alert aqui
+import { Alert, TextInput, View } from "react-native";
 import {
   FiltroOpcoes,
   ProximasSaidas,
 } from "./../../components/proximasSaidasFiltro";
 import { Screen } from "./../../components/safearea";
+
+// 🌐 Função utilitária para obter a data/hora atual convertida estritamente para o Horário de Brasília (UTC-3)
+const obterDataBrasilia = (): Date => {
+  const agora = new Date();
+  const fusoBrasilia =
+    agora.getTime() + agora.getTimezoneOffset() * 60000 - 3 * 3600000;
+  return new Date(fusoBrasilia);
+};
 
 export default function Inicial() {
   const router = useRouter();
@@ -39,12 +47,11 @@ export default function Inicial() {
   } = useFavoritos();
 
   // CONTROLE DE LOGIN
-  const usuarioLogado = true; // Teste mudando para false
+  const usuarioLogado = true;
 
   // GERENCIAMENTO ÚNICO DO FOOTER COM VALIDAÇÃO DE SEGURANÇA
   const handleNavegacaoFooter = (aba: TabOpcoes) => {
     if (aba === "home") {
-      // SE JÁ ESTIVER BUSCANDO, APENAS FECHA A BUSCA EM VEZ DE RECARREGAR A PÁGINA!
       if (estaBuscando) {
         handleSairDaBusca();
       }
@@ -63,7 +70,6 @@ export default function Inicial() {
     if (aba === "perfil") router.push("/perfil");
   };
 
-  // Regra de segurança para logout usando a função de limpar global
   useEffect(() => {
     if (!usuarioLogado) {
       limparFavoritos();
@@ -87,7 +93,6 @@ export default function Inicial() {
     { id: "d4", destino: "Ibiúna", horario: "19:10" },
   ]);
 
-  // Lógica corrigida monitorando os dados vindos do ROTAS_MOCK unificado
   useEffect(() => {
     if (busca.trim().length === 0) return;
 
@@ -98,7 +103,6 @@ export default function Inicial() {
       const termoBusca = busca.toLowerCase();
       const destinoRota = rota.destino.toLowerCase();
 
-      // Inteligência para bater tanto "S. João" quanto "São João"
       const atendeBusca =
         destinoRota.includes(termoBusca) ||
         (destinoRota.startsWith("s. joão") &&
@@ -109,9 +113,10 @@ export default function Inicial() {
 
     if (rotasFiltradas.length === 1) {
       const rotaEncontrada = rotasFiltradas[0];
+      const timestampBrasilia = obterDataBrasilia().getTime();
 
       const novaRotaRecente: RotaFavoritaProps = {
-        id: `auto_${rotaEncontrada.id}_${Date.now()}`, // ID amarrado ao ID real da rota para não dar conflito
+        id: `auto_${rotaEncontrada.id}_${timestampBrasilia}`,
         destino: rotaEncontrada.destino,
         horario: rotaEncontrada.proximoHorario,
       };
@@ -138,7 +143,6 @@ export default function Inicial() {
     }
   }, [busca, filtroBuscaAtivo]);
 
-  // Mapeamento dos favoritos vindos do contexto para o layout da Home 👈
   const favoritosFiltrados: RotaFavoritaProps[] = meusFavoritos.map((rota) => ({
     id: rota.id,
     destino: rota.destino,
@@ -148,7 +152,6 @@ export default function Inicial() {
         : rota.horarioDestino,
   }));
 
-  // INTERAÇÃO DE FAVORITAR VIA CONTEXTO GLOBAL COM CONFIRMAÇÃO 👈
   const handleAlternarFavoritoClick = (id: string, destino: string) => {
     if (!usuarioLogado) {
       router.push("/SolicitarConta");
@@ -222,7 +225,7 @@ export default function Inicial() {
               setBusca(txt);
               if (txt.length === 0) setEstaBuscando(true);
             }}
-            aoLimpar={() => setEstaBuscando(false)} // 👈 PASSE ESSA LINHA AQUI!
+            aoLimpar={() => setEstaBuscando(false)}
           />
 
           {estaBuscando ? (

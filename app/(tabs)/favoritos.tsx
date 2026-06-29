@@ -21,6 +21,9 @@ import {
 } from "react-native";
 import { fonts } from "./../_layout";
 
+{
+  /*mudar a parte caso n aja login pra uma tela parecida ja com a favoritos  sem ser aquela outra pagina mas solicitando o login algo como para criar sua lista é necessario login e um botao pra pagina de login */
+}
 export default function Favoritos() {
   const router = useRouter();
   const searchBarRef = useRef<TextInput>(null);
