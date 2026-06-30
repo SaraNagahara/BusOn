@@ -20,12 +20,12 @@ export default function termosDeUso() {
     {
       titulo: "Clause 1",
       texto:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Viverra condimentum eget purus in. Consectetur eget id morbi amet amet, in. Ipsum viverra pretium tellus neque. Ullamcorper suspendisse aenean leo pharetra in sit semper et. Amet quam placerat sem.",
+        "O aplicativo não se responsabiliza por mudanças de horários ou atrasos e imprevistos das viações, apenas fornecemos horários publicos disponibilizados pela propria empresa, não temos quais quer envolvimento com a gestão de cada viação",
     },
     {
       titulo: "Clause 2",
       texto:
-        "Ao criar uma conta e decidir excluir a mesma, a empresa não se responsabiliza pelos dados perdidos, ao deletar todos os dados serão perdidos sem excessão sendo necessário criar uma nova conta\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Viverra condimentum eget purus in. Consectetur eget id morbi amet amet, in. Ipsum viverra pretium tellus neque. Ullamcorper suspendisse aenean leo pharetra in sit semper et. Amet quam placerat sem.",
+        "Ao criar uma conta e decidir excluir a mesma, o aplicativo não se responsabiliza pelos dados perdidos, ao deletar todos os dados serão perdidos sem excessão sendo necessário criar uma nova conta\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Viverra condimentum eget purus in. Consectetur eget id morbi amet amet, in. Ipsum viverra pretium tellus neque. Ullamcorper suspendisse aenean leo pharetra in sit semper et. Amet quam placerat sem.",
     },
     {
       titulo: "Clause 3",

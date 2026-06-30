@@ -4,11 +4,13 @@ import { fonts } from "../app/_layout";
 interface HomeHeaderProps {
   titulo?: string; // 👈 1. ADICIONADO TITULO OPCIONAL
   subtitulo?: string;
+  dataAtualizacao?: string;
 }
 
 export function HomeHeader({
   titulo = "Seja Bem-Vindo", // 👈 2. VALOR PADRÃO CASO NÃO SEJA PASSADO
   subtitulo = "Qual o seu destino de hoje ?",
+  dataAtualizacao = "Horários atualizados em: 28/06/2026",
 }: HomeHeaderProps) {
   return (
     <View className="w-full bg-white pt-4 pb-3 px-6 border-b border-gray-200">
@@ -36,6 +38,18 @@ export function HomeHeader({
         className="mt-1"
       >
         {subtitulo}
+      </Text>
+
+      <Text
+        style={{
+          fontFamily: fonts.regular,
+          color: "#9CA3AF",
+          fontSize: 10,
+          lineHeight: 22,
+        }}
+        className="mt-1"
+      >
+        {dataAtualizacao}
       </Text>
     </View>
   );

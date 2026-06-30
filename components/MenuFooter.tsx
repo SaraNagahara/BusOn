@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { memo } from "react"; // ⚡ Importado memo para travar re-renders desnecessários
 import { Platform, Pressable, Text, View } from "react-native";
 import { fonts } from "../app/_layout";
 
@@ -9,7 +10,25 @@ interface MenuFooterProps {
   aoMudarAba: (aba: TabOpcoes) => void;
 }
 
-export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
+// ⚡ Usamos o memo() envolvendo a função para garantir ganho de performance nativa
+export const MenuFooter = memo(function MenuFooter({
+  abaAtiva,
+  aoMudarAba,
+}: MenuFooterProps) {
+  // ⚡ Configurações estáticas de cores e estados para evitar processamento de strings Tailwind
+  const obterEstiloAba = (aba: TabOpcoes) => {
+    const ativa = abaAtiva === aba;
+    return {
+      cor: "#3F5CC4",
+      bgLinha: ativa ? "bg-[#3F5CC4]" : "bg-transparent",
+      opacidadeTexto: ativa ? "opacity-100" : "opacity-60",
+    };
+  };
+
+  const statusHome = obterEstiloAba("home");
+  const statusFavoritas = obterEstiloAba("favoritas");
+  const statusPerfil = obterEstiloAba("perfil");
+
   return (
     <View className="w-full bg-white border-t border-gray-100">
       {/* Container principal das Abas */}
@@ -20,16 +39,16 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
           className="items-center justify-center flex-1 h-full"
         >
           <View
-            className={`w-16 h-1 rounded-full mb-2 ${abaAtiva === "home" ? "bg-[#3F5CC4]" : "bg-transparent"}`}
+            className={`w-16 h-1 rounded-full mb-2 ${statusHome.bgLinha}`}
           />
           <Ionicons
             name={abaAtiva === "home" ? "home" : "home-outline"}
             size={24}
-            color="#3F5CC4"
+            color={statusHome.cor}
           />
           <Text
             style={{ fontFamily: fonts.regular }}
-            className={`text-[#3F5CC4] text-xs mt-1 ${abaAtiva === "home" ? "opacity-100" : "opacity-60"}`}
+            className={`text-[#3F5CC4] text-xs mt-1 ${statusHome.opacidadeTexto}`}
           >
             Home
           </Text>
@@ -41,16 +60,16 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
           className="items-center justify-center flex-1 h-full"
         >
           <View
-            className={`w-16 h-1 rounded-full mb-2 ${abaAtiva === "favoritas" ? "bg-[#3F5CC4]" : "bg-transparent"}`}
+            className={`w-16 h-1 rounded-full mb-2 ${statusFavoritas.bgLinha}`}
           />
           <Ionicons
             name={abaAtiva === "favoritas" ? "star" : "star-outline"}
             size={24}
-            color="#3F5CC4"
+            color={statusFavoritas.cor}
           />
           <Text
             style={{ fontFamily: fonts.regular }}
-            className={`text-[#3F5CC4] text-xs mt-1 ${abaAtiva === "favoritas" ? "opacity-100" : "opacity-60"}`}
+            className={`text-[#3F5CC4] text-xs mt-1 ${statusFavoritas.opacidadeTexto}`}
           >
             Favoritas
           </Text>
@@ -62,16 +81,16 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
           className="items-center justify-center flex-1 h-full"
         >
           <View
-            className={`w-16 h-1 rounded-full mb-2 ${abaAtiva === "perfil" ? "bg-[#3F5CC4]" : "bg-transparent"}`}
+            className={`w-16 h-1 rounded-full mb-2 ${statusPerfil.bgLinha}`}
           />
           <Ionicons
             name={abaAtiva === "perfil" ? "person" : "person-outline"}
             size={24}
-            color="#3F5CC4"
+            color={statusPerfil.cor}
           />
           <Text
             style={{ fontFamily: fonts.regular }}
-            className={`text-[#3F5CC4] text-xs mt-1 ${abaAtiva === "perfil" ? "opacity-100" : "opacity-60"}`}
+            className={`text-[#3F5CC4] text-xs mt-1 ${statusPerfil.opacidadeTexto}`}
           >
             Perfil
           </Text>
@@ -87,4 +106,4 @@ export function MenuFooter({ abaAtiva, aoMudarAba }: MenuFooterProps) {
       />
     </View>
   );
-}
+});

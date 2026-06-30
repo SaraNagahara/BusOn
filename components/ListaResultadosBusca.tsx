@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useMemo, useState } from "react"; // ⚡ Importado useMemo para travar o reprocessamento da busca
 import { FlatList, Pressable, Text, View } from "react-native";
 import { fonts } from "../app/_layout";
-import { useFavoritos } from "../context/FavoritosProvider"; // 👈 Mantendo a importação do context que gerencia os alertas
+import { useFavoritos } from "../context/FavoritosProvider";
 import { TipoLinhaOpcoes } from "./FiltroBusca";
 
 export interface RotaResultadoProps {
@@ -24,7 +24,7 @@ interface ListaResultadosBuscaProps {
     idRota: string,
     destino: string,
     idAlerta: string | null,
-  ) => void; // 👈 Mantendo a assinatura para abrir o modal de alertas
+  ) => void;
 }
 
 const ROTAS_FICTICIAS: RotaResultadoProps[] = [
@@ -96,33 +96,40 @@ export function ListaResultadosBusca({
   aoClicarNoAlerta,
 }: ListaResultadosBuscaProps) {
   const [mostrarTudo, setMostrarTudo] = useState(false);
-  const { meusAlertas } = useFavoritos(); // 👈 Buscando os alertas salvos para o sininho
+  const { meusAlertas } = useFavoritos();
 
-  const rotasFiltradas = ROTAS_FICTICIAS.filter((rota) => {
-    if (apenasFavoritos && !listaFavoritosIds.includes(rota.id)) {
-      return false;
-    }
+  // ⚡ OTIMIZAÇÃO 1: O filtro complexo de busca agora está memorizado.
+  // Ele NÃO roda se o usuário clicar em algo que não altere as propriedades abaixo.
+  const rotasFiltradas = useMemo(() => {
+    return ROTAS_FICTICIAS.filter((rota) => {
+      if (apenasFavoritos && !listaFavoritosIds.includes(rota.id)) {
+        return false;
+      }
 
-    const atendeCategoria =
-      filtroCategoria === "todas" || rota.tipo === filtroCategoria;
+      const atendeCategoria =
+        filtroCategoria === "todas" || rota.tipo === filtroCategoria;
+      const termo = textoBusca.toLowerCase();
+      const destino = rota.destino.toLowerCase();
 
-    const termo = textoBusca.toLowerCase();
-    const destino = rota.destino.toLowerCase();
+      const atendeBusca =
+        destino.includes(termo) ||
+        (destino.startsWith("s. joão") && termo.startsWith("sao joao"));
 
-    const atendeBusca =
-      destino.includes(termo) ||
-      (destino.startsWith("s. joão") && termo.startsWith("sao joao"));
+      return atendeCategoria && atendeBusca;
+    });
+  }, [filtroCategoria, textoBusca, listaFavoritosIds, apenasFavoritos]);
 
-    return atendeCategoria && atendeBusca;
-  });
+  // ⚡ OTIMIZAÇÃO 2: Controla o slice de dados baseando-se no cache acima
+  const dadosExibidos = useMemo(() => {
+    return mostrarTudo ? rotasFiltradas : rotasFiltradas.slice(0, 4);
+  }, [mostrarTudo, rotasFiltradas]);
 
-  const dadosExibidos = mostrarTudo
-    ? rotasFiltradas
-    : rotasFiltradas.slice(0, 4);
   const rotasRestantes = rotasFiltradas.length - dadosExibidos.length;
 
   const renderCardRota = ({ item }: { item: RotaResultadoProps }) => {
     const isFavorito = listaFavoritosIds.includes(item.id);
+
+    // Mantido o filtro para os alertas associados à rota específica
     const alertasDessaRota = meusAlertas.filter(
       (alerta) => alerta.idRota === item.id,
     );
@@ -150,7 +157,6 @@ export function ListaResultadosBusca({
             {item.origem}
           </Text>
 
-          {/* ⏱️ HORÁRIO ORIGINAL: Exibido apenas na HOME */}
           {!apenasFavoritos && (
             <Text
               style={{ fontFamily: fonts.medium }}
@@ -160,7 +166,6 @@ export function ListaResultadosBusca({
             </Text>
           )}
 
-          {/* 🔔 EXIBIÇÃO COLETIVA DOS ALERTAS SALVOS: Apenas na tela de Favoritos */}
           {apenasFavoritos && alertasDessaRota.length > 0 && (
             <View className="flex-row gap-1.5 mt-2 flex-wrap">
               {alertasDessaRota.map((alerta) => (
@@ -184,9 +189,7 @@ export function ListaResultadosBusca({
           )}
         </View>
 
-        {/* Controles do canto direito do Card */}
         <View className="flex-row items-center gap-1">
-          {/* 🔔 SINO DE ALERTAS: Exibido apenas na tela de Favoritos */}
           {apenasFavoritos && (
             <Pressable
               onPress={() => {
@@ -210,7 +213,6 @@ export function ListaResultadosBusca({
             </Pressable>
           )}
 
-          {/* ❤️ CORAÇÃO DE FAVORITOS: Disponível em ambos os ambientes */}
           <Pressable
             onPress={() => aoAlternarFavorito(item.id, item.destino)}
             className="p-2 active:scale-110"
@@ -226,6 +228,28 @@ export function ListaResultadosBusca({
     );
   };
 
+  // ⚡ OTIMIZAÇÃO 3: Isolamos o componente do rodapé para evitar recriação visual desnecessária na lista
+  const renderFooter = () => {
+    if (!mostrarTudo && rotasRestantes > 0) {
+      return (
+        <View className="w-full items-center mt-2 mb-6">
+          <Pressable
+            onPress={() => setMostrarTudo(true)}
+            className="bg-[#E2E8F0] px-5 py-2.5 rounded-full"
+          >
+            <Text
+              style={{ fontFamily: fonts.bold }}
+              className="text-[#334155] text-xs uppercase tracking-wider"
+            >
+              {rotasRestantes + dadosExibidos.length} linhas disponíveis
+            </Text>
+          </Pressable>
+        </View>
+      );
+    }
+    return null;
+  };
+
   return (
     <FlatList
       data={dadosExibidos}
@@ -233,23 +257,11 @@ export function ListaResultadosBusca({
       keyExtractor={(item) => item.id}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 20 }}
-      ListFooterComponent={() =>
-        !mostrarTudo && rotasRestantes > 0 ? (
-          <View className="w-full items-center mt-2 mb-6">
-            <Pressable
-              onPress={() => setMostrarTudo(true)}
-              className="bg-[#E2E8F0] px-5 py-2.5 rounded-full"
-            >
-              <Text
-                style={{ fontFamily: fonts.bold }}
-                className="text-[#334155] text-xs uppercase tracking-wider"
-              >
-                {rotasRestantes + dadosExibidos.length} lines disponíveis
-              </Text>
-            </Pressable>
-          </View>
-        ) : null
-      }
+      ListFooterComponent={renderFooter}
+      // ⚡ Propriedades de performance nativa do FlatList
+      initialNumToRender={4}
+      maxToRenderPerBatch={4}
+      windowSize={5}
     />
   );
 }

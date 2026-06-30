@@ -6,24 +6,23 @@ import { Screen } from "@/components/safearea";
 import { SearchBar } from "@/components/searchBar";
 import { TituloFiltro } from "@/components/TituloFiltro";
 import { ROTAS_MOCK } from "@/constants/rotasDados";
+import { useAuth } from "@/context/AuthProvider";
 import { useFavoritos } from "@/context/FavoritosProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"; // ⚡ Importado useCallback
 import {
   Alert,
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { fonts } from "./../_layout";
 
-{
-  /*mudar a parte caso n aja login pra uma tela parecida ja com a favoritos  sem ser aquela outra pagina mas solicitando o login algo como para criar sua lista é necessario login e um botao pra pagina de login */
-}
 export default function Favoritos() {
   const router = useRouter();
   const searchBarRef = useRef<TextInput>(null);
@@ -31,9 +30,8 @@ export default function Favoritos() {
   const [busca, setBusca] = useState("");
   const [filtroBuscaAtivo, setFiltroBuscaAtivo] =
     useState<TipoLinhaOpcoes>("todas");
-  const [usuarioLogado, setUsuarioLogado] = useState(true);
+  const { usuarioLogado } = useAuth();
 
-  // Estados do Modal
   const [modalVisible, setModalVisible] = useState(false);
   const [rotaSelecionadaId, setRotaSelecionadaId] = useState<string | null>(
     null,
@@ -41,7 +39,7 @@ export default function Favoritos() {
   const [rotaSelecionadaNome, setRotaSelecionadaNome] = useState("");
   const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(
     null,
-  ); // 👈 Começa limpo para obrigar a seleção caso não venha do mock/alerta
+  );
   const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
   const [alertaSelecionadoId, setAlertaSelecionadoId] = useState<string | null>(
     null,
@@ -62,114 +60,122 @@ export default function Favoritos() {
     }
   }, [usuarioLogado]);
 
-  const handleAlternarFavorito = (id: string, destino: string) => {
-    if (!usuarioLogado) {
-      router.push("/SolicitarConta");
-      return;
-    }
+  // ⚡ OTIMIZAÇÃO 1: Evita recriação ao favoritar/desfavoritar
+  const handleAlternarFavorito = useCallback(
+    (id: string, destino: string) => {
+      const jaEFavorito = listaFavoritosIds.includes(id);
 
-    const jaEFavorito = listaFavoritosIds.includes(id);
-
-    if (jaEFavorito) {
-      Alert.alert(
-        "Remover dos Favoritos",
-        `Tem certeza que deseja desfavoritar a linha ${destino}?`,
-        [
-          { text: "Cancelar", style: "cancel" },
-          {
-            text: "Sim, remover",
-            style: "destructive",
-            onPress: () => alternarFavorito(id, destino),
-          },
-        ],
-      );
-    } else {
-      Alert.alert(
-        "Adicionar aos Favoritos",
-        `Deseja favoritar a linha ${destino}?`,
-        [
-          { text: "Cancelar", style: "cancel" },
-          {
-            text: "Sim, favoritar",
-            style: "default",
-            onPress: () => alternarFavorito(id, destino),
-          },
-        ],
-      );
-    }
-  };
-
-  const handleNavegacaoFooter = (aba: TabOpcoes) => {
-    if (aba === "home") router.push("/inicial");
-    if (aba === "perfil") router.push("/perfil");
-  };
-
-  const handleAbrirConfigurarAlerta = (
-    idRota: string,
-    destino: string,
-    idAlerta: string | null,
-  ) => {
-    if (idAlerta === "REMOVER_TODOS") {
-      exibirAlertaRemocao(idRota, destino);
-      return;
-    }
-
-    const LIMITE_MAXIMO_ALERTAS = 2;
-    if (idAlerta === null && meusAlertas.length >= LIMITE_MAXIMO_ALERTAS) {
-      const temAlertaNessaRota = meusAlertas.some((a) => a.idRota === idRota);
-
-      if (temAlertaNessaRota) {
-        exibirAlertaRemocao(idRota, destino);
+      if (jaEFavorito) {
+        Alert.alert(
+          "Remover dos Favoritos",
+          `Tem certeza que deseja desfavoritar a linha ${destino}?`,
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Sim, remover",
+              style: "destructive",
+              onPress: () => alternarFavorito(id, destino),
+            },
+          ],
+        );
       } else {
         Alert.alert(
-          "Limite Atingido",
-          "Você já atingiu o limite máximo de alertas salvos no aplicativo. Remova um alerta existente para adicionar este.",
-          [{ text: "Entendido", style: "default" }],
+          "Adicionar aos Favoritos",
+          `Deseja favoritar a linha ${destino}?`,
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Sim, favoritar",
+              style: "default",
+              onPress: () => alternarFavorito(id, destino),
+            },
+          ],
         );
       }
-      return;
-    }
+    },
+    [listaFavoritosIds, alternarFavorito],
+  );
 
-    setRotaSelecionadaId(idRota);
-    setRotaSelecionadaNome(destino);
-    setAlertaSelecionadoId(idAlerta);
+  // ⚡ OTIMIZAÇÃO 2: Memorizada função de navegação do Footer
+  const handleNavegacaoFooter = useCallback(
+    (aba: TabOpcoes) => {
+      if (aba === "home") router.push("/inicial");
+      if (aba === "perfil") router.push("/perfil");
+    },
+    [router],
+  );
 
-    if (idAlerta) {
-      const alertaExistente = meusAlertas.find((a) => a.idAlerta === idAlerta);
-      setHorarioSelecionado(alertaExistente?.horario || null); // 👈 Pega o salvo ou deixa nulo para escolha
-      setDiasSelecionados(
-        alertaExistente?.dias || ["seg", "ter", "qua", "qui", "sex"],
-      );
-    } else {
-      const rotaNoMock = ROTAS_MOCK.find((r) => r.id === idRota);
-      setHorarioSelecionado(null);
-      setDiasSelecionados(["seg", "ter", "qua", "qui", "sex"]);
-    }
-
-    setModalVisible(true);
-  };
-
-  const exibirAlertaRemocao = (idRota: string, destino: string) => {
-    Alert.alert(
-      "Remover Notificações",
-      `Deseja desativar todas as notificações da linha ${destino} para liberar espaço?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Remover Notificações",
-          style: "destructive",
-          onPress: () => {
-            const alertasParaRemover = meusAlertas.filter(
-              (a) => a.idRota === idRota,
-            );
-            alertasParaRemover.forEach((alerta) =>
-              removerAlertaPorId(alerta.idAlerta),
-            );
+  // ⚡ OTIMIZAÇÃO 3: Isolando a lógica de remoção em lote para o useCallback
+  const exibirAlertaRemocao = useCallback(
+    (idRota: string, destino: string) => {
+      Alert.alert(
+        "Remover Notificações",
+        `Deseja desativar todas as notificações da linha ${destino} para liberar espaço?`,
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Remover Notificações",
+            style: "destructive",
+            onPress: () => {
+              const alertasParaRemover = meusAlertas.filter(
+                (a) => a.idRota === idRota,
+              );
+              alertasParaRemover.forEach((alerta) =>
+                removerAlertaPorId(alerta.idAlerta),
+              );
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [meusAlertas, removerAlertaPorId],
+  );
+
+  // ⚡ OTIMIZAÇÃO 4: Abertura do modal ultraveloz travando renderizações inúteis
+  const handleAbrirConfigurarAlerta = useCallback(
+    (idRota: string, destino: string, idAlerta: string | null) => {
+      if (idAlerta === "REMOVER_TODOS") {
+        exibirAlertaRemocao(idRota, destino);
+        return;
+      }
+
+      const LIMITE_MAXIMO_ALERTAS = 2;
+      if (idAlerta === null && meusAlertas.length >= LIMITE_MAXIMO_ALERTAS) {
+        const temAlertaNessaRota = meusAlertas.some((a) => a.idRota === idRota);
+
+        if (temAlertaNessaRota) {
+          exibirAlertaRemocao(idRota, destino);
+        } else {
+          Alert.alert(
+            "Limite Atingido",
+            "Você já atingiu o limite máximo de alertas salvos no aplicativo. Remova um alerta existente para adicionar este.",
+            [{ text: "Entendido", style: "default" }],
+          );
+        }
+        return;
+      }
+
+      setRotaSelecionadaId(idRota);
+      setRotaSelecionadaNome(destino);
+      setAlertaSelecionadoId(idAlerta);
+
+      if (idAlerta) {
+        const alertaExistente = meusAlertas.find(
+          (a) => a.idAlerta === idAlerta,
+        );
+        setHorarioSelecionado(alertaExistente?.horario || null);
+        setDiasSelecionados(
+          alertaExistente?.dias || ["seg", "ter", "qua", "qui", "sex"],
+        );
+      } else {
+        setHorarioSelecionado(null);
+        setDiasSelecionados(["seg", "ter", "qua", "qui", "sex"]);
+      }
+
+      setModalVisible(true);
+    },
+    [meusAlertas, exibirAlertaRemocao],
+  );
 
   const handleAlternarDia = (idDia: string) => {
     if (diasSelecionados.includes(idDia)) {
@@ -182,7 +188,6 @@ export default function Favoritos() {
   const handleSalvarAlerta = () => {
     if (!rotaSelecionadaId) return;
 
-    // 👈 Trava estrita: Se não houver horário selecionado, impede o salvamento
     if (!horarioSelecionado) {
       Alert.alert(
         "Horário Obrigatório",
@@ -224,7 +229,6 @@ export default function Favoritos() {
     "20:15",
     "21:40",
   ];
-
   const DIAS_SEMANA_MOCK = [
     { label: "S", id: "seg" },
     { label: "T", id: "ter" },
@@ -235,25 +239,28 @@ export default function Favoritos() {
     { label: "D", id: "dom" },
   ];
 
-  const favoritosFiltrados = ROTAS_MOCK.filter((rota) => {
-    const eFavorito = listaFavoritosIds.includes(rota.id);
-    const atendeCategoria =
-      filtroBuscaAtivo === "todas" || rota.tipo === filtroBuscaAtivo;
-    const termoBusca = busca.toLowerCase();
-    const destinoRota = rota.destino.toLowerCase();
-    return (
-      eFavorito &&
-      atendeCategoria &&
-      (destinoRota.includes(termoBusca) ||
-        (destinoRota.startsWith("s. joão") &&
-          termoBusca.startsWith("sao joao")))
-    );
-  });
+  const favoritosFiltrados = useMemo(() => {
+    return ROTAS_MOCK.filter((rota) => {
+      const eFavorito = listaFavoritosIds.includes(rota.id);
+      const atendeCategoria =
+        filtroBuscaAtivo === "todas" || rota.tipo === filtroBuscaAtivo;
+      const termoBusca = busca.toLowerCase();
+      const destinoRota = rota.destino.toLowerCase();
+      return (
+        eFavorito &&
+        atendeCategoria &&
+        (destinoRota.includes(termoBusca) ||
+          (destinoRota.startsWith("s. joão") &&
+            termoBusca.startsWith("sao joao")))
+      );
+    });
+  }, [busca, filtroBuscaAtivo, listaFavoritosIds]);
 
   return (
     <View className="flex-1 bg-white">
       <Screen>
-        <View className="flex-1 px-4 pb-28">
+        {/* 🛠️ SOLUÇÃO DO CORTE: Tiramos o pb-28 daqui para permitir que o container ocupe a tela inteira */}
+        <View className="flex-1 px-4">
           <HomeHeader
             titulo="Olá, Fulano"
             subtitulo="Suas linhas salvas e favoritas"
@@ -273,20 +280,55 @@ export default function Favoritos() {
           />
           <TituloFiltro filtroAtivo={filtroBuscaAtivo} />
 
-          <View className="flex-1 mt-2">
+          <View className="flex-1 mt-4">
             {favoritosFiltrados.length === 0 ? (
-              <View className="flex-1 justify-center items-center px-8">
+              <ScrollView
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  paddingBottom: 100, // ⚡ Garante espaçamento mesmo na tela vazia
+                }}
+                showsVerticalScrollIndicator={false}
+                className="px-6"
+              >
                 <Text
                   style={{ fontFamily: fonts.medium }}
-                  className="text-[#64748B] text-base text-center"
+                  className="text-[#64748B] text-base text-center leading-relaxed"
                 >
                   {listaFavoritosIds.length === 0
-                    ? "Nenhuma rota salva nos favoritos"
-                    : "Nenhum resultado encontrado"}
+                    ? "Nenhuma rota salva nos favoritos."
+                    : "Nenhum resultado encontrado."}
+                  {usuarioLogado === false &&
+                    "\n\nPara criar sua lista de favoritos, é necessário realizar o login. Clique no botão abaixo para acessar a página de login."}
                 </Text>
-              </View>
+
+                {usuarioLogado === false && (
+                  <View className="w-full items-center">
+                    <View className="h-6" />
+                    <Pressable
+                      onPress={() => router.push("/loginCadastro")}
+                      className="flex-row items-center justify-center border border-slate-300 px-6 py-3 rounded-xl active:bg-slate-50 w-full max-w-[280px]"
+                    >
+                      <Ionicons
+                        name="log-in-outline"
+                        size={18}
+                        color="#3F5CC4"
+                      />
+                      <Text
+                        style={{ fontFamily: fonts.medium }}
+                        className="text-[#3F5CC4] text-sm ml-2"
+                      >
+                        Acessar página de login
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              </ScrollView>
             ) : (
               <View className="flex-1">
+                {/* ⚡ Passamos o padding diretamente para a rolagem interna do FlatList. 
+                    Dessa forma os cards passam por baixo do MenuFooter de forma fluida sem nunca cortar! */}
                 <ListaResultadosBusca
                   filtroCategoria={filtroBuscaAtivo}
                   textoBusca={busca}
@@ -319,7 +361,6 @@ export default function Favoritos() {
               style={{ paddingBottom: 24 + (Platform.OS === "ios" ? 28 : 28) }}
               className="bg-white rounded-t-[32px] p-6 w-full z-10 shadow-2xl"
             >
-              {/* Header do Modal */}
               <View className="flex-row justify-between items-center mb-5">
                 <View>
                   <Text
@@ -345,7 +386,6 @@ export default function Favoritos() {
                 </Pressable>
               </View>
 
-              {/* Horários */}
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xs text-slate-400 uppercase tracking-widest mb-3"
@@ -358,7 +398,6 @@ export default function Favoritos() {
                   return (
                     <Pressable
                       key={hr}
-                      // 👈 Lógica corrigida aqui: se já for o selecionado, desmarca virando null
                       onPress={() =>
                         setHorarioSelecionado(selecionado ? null : hr)
                       }
@@ -381,7 +420,6 @@ export default function Favoritos() {
                 })}
               </View>
 
-              {/* Dias da Semana */}
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xs text-slate-400 uppercase tracking-widest mb-3"
@@ -412,7 +450,6 @@ export default function Favoritos() {
                 })}
               </View>
 
-              {/* Botões do Modal */}
               <View className="flex-row gap-3">
                 {alertaSelecionadoId !== null && (
                   <Pressable
