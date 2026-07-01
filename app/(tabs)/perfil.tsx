@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, Text, TouchableOpacity, View } from "react-native";
-import SetaAzulTraçada from "../../assets/icons/SetaAzulTraçada.svg";
+import SetaAzulSemTraço from "../../assets/icons/SetaAzulSemTraco.svg";
 import { fonts } from "./../_layout";
 
 export default function Perfil() {
@@ -59,7 +59,7 @@ export default function Perfil() {
             className="w-12 h-12 justify-center items-start"
             activeOpacity={0.7}
           >
-            <SetaAzulTraçada width={32} height={32} />
+            <SetaAzulSemTraço width={32} height={32} />
           </TouchableOpacity>
         </View>
 

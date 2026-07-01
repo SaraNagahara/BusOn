@@ -1,12 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { ReactNode } from "react"; // ⚡ Importado
+import { ReactNode } from "react";
 import { Text, TouchableOpacity, ViewStyle } from "react-native";
 
 interface ButtonProps {
   titulo: string;
   onPress: () => void;
   style?: ViewStyle;
-  icone?: ReactNode; // ⚡ Nova propriedade opcional para o ícone
+  icone?: ReactNode;
 }
 
 export default function ButtonAzulPadrao({
@@ -19,7 +19,7 @@ export default function ButtonAzulPadrao({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
-      className="mt-10 w-full"
+      className="w-full"
       style={[
         {
           alignSelf: "stretch",
@@ -39,20 +39,20 @@ export default function ButtonAzulPadrao({
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={{
-          paddingVertical: 16,
+          paddingVertical: 14, // ⚡ Reduzi de 16 para 14 para ficar menos robusto
           borderRadius: 20,
           justifyContent: "center",
           alignItems: "center",
-          flexDirection: "row", // ⚡ Garante que ícone e texto fiquem lado a lado
-          gap: 8, // ⚡ Espaçamento entre ícone e texto
+          flexDirection: "row",
+          gap: 8,
           width: "100%",
         }}
       >
-        {icone && icone} {/* ⚡ Renderiza o ícone se ele existir */}
+        {icone}
         <Text
           style={{
             color: "#fff",
-            fontSize: 20,
+            fontSize: 16, // ⚡ Reduzi de 20 para 16 para ficar mais harmônico na página
             fontWeight: "bold",
             textAlign: "center",
           }}

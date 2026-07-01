@@ -28,7 +28,7 @@ export const MenuOpcoesBloco = memo(function MenuOpcoesBloco({
             style={{ fontFamily: fonts.bold }}
             className="text-gray-900 text-base"
           >
-            Perfil
+            Dados do perfil
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color="#64748B" />
@@ -48,7 +48,7 @@ export const MenuOpcoesBloco = memo(function MenuOpcoesBloco({
             style={{ fontFamily: fonts.bold }}
             className="text-gray-900 text-base"
           >
-            Conta
+            Configurações
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color="#64748B" />
