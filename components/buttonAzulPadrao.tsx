@@ -1,16 +1,19 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { ReactNode } from "react"; // ⚡ Importado
 import { Text, TouchableOpacity, ViewStyle } from "react-native";
 
 interface ButtonProps {
   titulo: string;
   onPress: () => void;
   style?: ViewStyle;
+  icone?: ReactNode; // ⚡ Nova propriedade opcional para o ícone
 }
 
 export default function ButtonAzulPadrao({
   titulo,
   onPress,
   style,
+  icone,
 }: ButtonProps) {
   return (
     <TouchableOpacity
@@ -26,7 +29,7 @@ export default function ButtonAzulPadrao({
           shadowOpacity: 0.2,
           shadowRadius: 3,
           borderRadius: 20,
-          overflow: "hidden", // importante
+          overflow: "hidden",
         },
         style,
       ]}
@@ -40,9 +43,12 @@ export default function ButtonAzulPadrao({
           borderRadius: 20,
           justifyContent: "center",
           alignItems: "center",
+          flexDirection: "row", // ⚡ Garante que ícone e texto fiquem lado a lado
+          gap: 8, // ⚡ Espaçamento entre ícone e texto
           width: "100%",
         }}
       >
+        {icone && icone} {/* ⚡ Renderiza o ícone se ele existir */}
         <Text
           style={{
             color: "#fff",

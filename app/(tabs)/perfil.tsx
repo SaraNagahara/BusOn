@@ -1,17 +1,20 @@
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
+import { MenuOpcoesBloco } from "@/components/MenuOpcoesBlocoPerfil";
 import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useCallback } from "react"; // ⚡ Importado para congelar as funções na memória
-import { Pressable, Text, View } from "react-native";
+import { useCallback } from "react";
+import { Pressable, Text, TouchableOpacity, View } from "react-native";
+import SetaAzulTraçada from "../../assets/icons/SetaAzulTraçada.svg";
 import { fonts } from "./../_layout";
 
 export default function Perfil() {
   const router = useRouter();
   const { usuarioLogado } = useAuth();
 
-  // ⚡ OTIMIZAÇÃO: Memoriza a função do Footer para evitar re-renderizações lentas do menu
+  // ⚡ OTIMIZAÇÃO: Memoriza a função do Footer
   const handleNavegacaoFooter = useCallback(
     (aba: TabOpcoes) => {
       if (aba === "home") {
@@ -24,27 +27,76 @@ export default function Perfil() {
     [router],
   );
 
-  // ⚡ OTIMIZAÇÃO: Memoriza o clique de login direcionando para a rota correta
+  // ⚡ OTIMIZAÇÃO: Cliques memorizados
   const handleIrParaLogin = useCallback(() => {
-    router.push("/loginCadastro"); // 🚀 Ajustado para a sua página correta
+    router.push("/loginCadastro");
   }, [router]);
 
-  // ⚡ OTIMIZAÇÃO: Memoriza o clique de termos
   const handleIrParaTermos = useCallback(() => {
     router.push("/termosDeUso");
   }, [router]);
 
+  // 🚀 NOVAS ROTAS SOLICITADAS: Cliques do componente reaproveitável
+  const handleIrParaDadosPerfil = useCallback(() => {
+    router.push("/dadosPerfilDoUsuario");
+  }, [router]);
+
+  const handleIrParaConfiguracoes = useCallback(() => {
+    router.push("/configuracoesDoUsuario");
+  }, [router]);
+
+  const handleIrParaLogout = useCallback(() => {
+    router.push("/TemCertezaLogout");
+  }, [router]);
+
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#F2F2F7]">
       <Screen>
+        {/* 🗺️ ÁREA DO TOPO COM O BOTÃO VOLTAR FIXO */}
+        <View className="w-full px-5 pt-2 items-start justify-start">
+          <TouchableOpacity
+            onPress={() => router.back()} // 🚀 Volta para a tela anterior
+            className="w-12 h-12 justify-center items-start"
+            activeOpacity={0.7}
+          >
+            <SetaAzulTraçada width={32} height={32} />
+          </TouchableOpacity>
+        </View>
+
         {usuarioLogado ? (
-          /* 📝 CONTEÚDO CASO LOGADO */
-          <View className="flex-1 items-center justify-center">
-            <Text className="text-gray-800 text-lg">Bem-vindo, fulano!</Text>
+          <View className="flex-1 px-5">
+            {/* 👤 FOTO DE PERFIL, NOME E EMAIL CENTRALIZADOS ABAIXO DA SETA */}
+            <View className="items-center my-6">
+              <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center border-4 border-slate-50 shadow-sm mb-3">
+                <Ionicons name="person" size={42} color="#3F5CC4" />
+              </View>
+              <Text
+                style={{ fontFamily: fonts.bold }}
+                className="text-xl text-slate-900 text-center"
+              >
+                Fulano de Tal
+              </Text>
+            </View>
+
+            {/* ⚙️ COMPONENTE INSTANCIADO CORRETAMENTE COM AS PROPS DE NAVEGAÇÃO */}
+            <MenuOpcoesBloco
+              aoClicarPerfil={handleIrParaDadosPerfil}
+              aoClicarConta={handleIrParaConfiguracoes}
+            />
+
+            {/* 🚪 COMPONENTE AJUSTADO PARA FICAR MENOS ROBUSTO */}
+            <ButtonAzulPadrao
+              titulo="Sair da conta"
+              onPress={handleIrParaLogout}
+              style={{ marginTop: 24 }} // ⚡ Reduz a distância do bloco de cima para não ocupar a tela inteira
+              icone={
+                <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
+              }
+            />
           </View>
         ) : (
           /* 👤 CONTEÚDO DO VISITANTE SUPER OTIMIZADO */
-          <View className="flex-1 px-5 pt-4">
+          <View className="flex-1 px-5 pt-2">
             {/* 👤 HEADER DO PERFIL DE VISITANTE */}
             <View className="items-center my-6">
               <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center border-4 border-slate-50 shadow-sm mb-3">
@@ -104,9 +156,10 @@ export default function Perfil() {
                 Conta
               </Text>
 
+              {/* 🎨 Cor alterada para #1D61E7 casando com o ButtonAzulPadrao */}
               <Pressable
                 onPress={handleIrParaLogin}
-                className="flex-row items-center justify-between bg-[#3F5CC4] p-4 rounded-2xl active:bg-[#344da6]"
+                className="flex-row items-center justify-between bg-[#1D61E7] p-4 rounded-2xl active:bg-[#154cb8]"
               >
                 <View className="flex-row items-center gap-3">
                   <View className="bg-white/20 p-2 rounded-xl">
