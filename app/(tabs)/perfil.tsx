@@ -49,6 +49,19 @@ export default function Perfil() {
     router.push("/TemCertezaLogout");
   }, [router]);
 
+  const opcoesPerfil = [
+    {
+      titulo: "Dados do perfil",
+      iconeNome: "person-outline" as const,
+      onPress: () => router.push("/dadosPerfilDoUsuario"),
+    },
+    {
+      titulo: "Configurações",
+      iconeNome: "settings-outline" as const,
+      onPress: () => router.push("/configuracoesDoUsuario"),
+    },
+  ];
+
   return (
     <View className="flex-1 bg-[#F2F2F7]">
       <Screen>
@@ -79,10 +92,7 @@ export default function Perfil() {
             </View>
 
             {/* ⚙️ COMPONENTE INSTANCIADO CORRETAMENTE COM AS PROPS DE NAVEGAÇÃO */}
-            <MenuOpcoesBloco
-              aoClicarPerfil={handleIrParaDadosPerfil}
-              aoClicarConta={handleIrParaConfiguracoes}
-            />
+            <MenuOpcoesBloco opcoes={opcoesPerfil} />
 
             {/* 🚪 COMPONENTE AJUSTADO PARA FICAR MENOS ROBUSTO */}
             <ButtonAzulPadrao
