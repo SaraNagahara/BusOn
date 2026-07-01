@@ -9,7 +9,6 @@ interface UsuarioDadosProps {
     nome: string;
     email: string;
     telefone: string;
-    dataVerificacao?: string;
   };
 }
 
@@ -20,7 +19,6 @@ export const DadosPessoaisCard = memo(function DadosPessoaisCard({
   const nome = usuario?.nome || "-";
   const email = usuario?.email || "-";
   const telefone = usuario?.telefone || "-";
-  const dataVerificacao = usuario?.dataVerificacao || "03/04/2026";
 
   return (
     <View className="w-full bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm">
@@ -102,17 +100,6 @@ export const DadosPessoaisCard = memo(function DadosPessoaisCard({
             {telefone}
           </Text>
         </View>
-      </View>
-
-      {/* 🛡️ INDICADOR DE CONTA VERIFICADA */}
-      <View className="w-full flex-row items-center justify-center gap-1.5 pt-1">
-        <Ionicons name="checkmark-circle" size={16} color="#84CC16" />
-        <Text
-          style={{ fontFamily: fonts.regular }}
-          className="text-xs text-gray-400"
-        >
-          Conta verificada em {dataVerificacao}
-        </Text>
       </View>
     </View>
   );

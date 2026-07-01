@@ -45,7 +45,6 @@ export default function dadosPerfilDoUsuario() {
     nome: "Fulano de Tal",
     email: "fulano.de.tal@email.com",
     telefone: "(11) 99999-9999",
-    dataVerificacao: "03/04/2026",
   };
 
   return (
