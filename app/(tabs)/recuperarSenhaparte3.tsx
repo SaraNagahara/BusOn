@@ -1,4 +1,5 @@
-import { useRouter } from "expo-router";
+import { useAuth } from "@/context/AuthProvider";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -15,16 +16,39 @@ import PasswordInputField from "./../../components/PasswordInputField";
 import { Screen } from "./../../components/safearea";
 import { TituloCustomizado } from "./../../components/TituloCustomizado";
 
-export default function RecuperarSenha() {
-  // Estados para as senhas
+export default function RecuperarSenhaParte3() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  // Estado para mensagem de erro (exemplo)
   const [errorMessage, setErrorMessage] = useState(
     "A senha deve ter 8 dígitos",
   );
 
+  const { usuarioLogado } = useAuth();
   const router = useRouter();
+  const params = useLocalSearchParams();
+
+  const veioDoPerfil = params?.origem === "perfil";
+
+  if (usuarioLogado && !veioDoPerfil) {
+    return <Redirect href="/notfound" />;
+  }
+
+  // 🚀 CORRIGIDO: Agora ambos os fluxos vão para a Parte 4, mas com flags diferentes
+  const handleAlterarSenha = () => {
+    if (veioDoPerfil) {
+      // 🔄 Veio do Perfil: Vai para o sucesso avisando que foi alteração de SENHA interna
+      router.push({
+        pathname: "/recuperarSenhaparte4",
+        params: { origem: "perfil_senha" },
+      });
+    } else {
+      // 🔒 Fluxo Externo: Esqueci a senha tradicional do login
+      router.push({
+        pathname: "/recuperarSenhaparte4",
+        params: { origem: "externo" },
+      });
+    }
+  };
 
   return (
     <FundoAzul>
@@ -36,19 +60,24 @@ export default function RecuperarSenha() {
         >
           <View className="flex-1 pt-4">
             <AuthHeader
-              titulo="Comece Agora"
-              subtitulo="Crie uma conta ou faça seu login"
+              titulo={veioDoPerfil ? "Conta" : "Comece Agora"}
+              subtitulo={
+                veioDoPerfil
+                  ? "Atualize sua senha de acesso com segurança"
+                  : "Crie uma conta ou faça seu login"
+              }
             />
+
             <CardBranco>
-              {/* 1. TOPO FIXO: Título fora da área de Scroll */}
               <View className="pb-2">
                 <TituloCustomizado
-                  titulo="Crie sua nova senha"
+                  titulo={
+                    veioDoPerfil ? "Altere sua Senha." : "Crie sua nova senha"
+                  }
                   corDoTexto="#0040A1"
                 />
               </View>
 
-              {/* 2. ÁREA DE ROLAGEM: Inputs, erros e botão rolam juntos */}
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 40 }}
@@ -57,21 +86,18 @@ export default function RecuperarSenha() {
                 className="flex-1"
               >
                 <View className="mt-4">
-                  {/* Usando o componente para 'NOVA SENHA' */}
                   <PasswordInputField
                     label="NOVA SENHA"
                     value={newPassword}
                     onChangeText={setNewPassword}
                   />
 
-                  {/* Usando o componente para 'CONFIRMAR NOVA SENHA' */}
                   <PasswordInputField
                     label="CONFIRMAR NOVA SENHA"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                   />
 
-                  {/* Exibir mensagem de erro de validação */}
                   {errorMessage && newPassword !== "" && (
                     <Text className="text-sm text-red-500 mt-2 px-1">
                       {errorMessage}
@@ -79,11 +105,12 @@ export default function RecuperarSenha() {
                   )}
                 </View>
 
-                {/* Container do Botão */}
                 <View className="px-2 mb-4 mt-8">
                   <ButtonAzulPadrao
-                    titulo="Alterar senha"
-                    onPress={() => router.push("/recuperarSenhaparte4")}
+                    titulo={
+                      veioDoPerfil ? "Salvar Nova Senha" : "Alterar senha"
+                    }
+                    onPress={handleAlterarSenha}
                   />
                 </View>
               </ScrollView>

@@ -1,61 +1,93 @@
-import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
 import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
+import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
-import { useCallback } from "react"; // ⚡ Importado para congelar as funções na memória
+import { useCallback } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import SetaAzulSemTraço from "../../assets/icons/SetaAzulSemTraco.svg";
+import { fonts } from "../_layout"; // Ajuste o caminho se necessário
 
 export default function TemCertezaLogout() {
   const router = useRouter();
-  const { usuarioLogado } = useAuth();
+  const { usuarioLogado, setUsuarioLogado } = useAuth(); // ⚡ Acesse a mutation do seu Provider aqui
 
+  // 🛡️ Trava de segurança: impede acesso direto via URL caso não esteja logado
   if (!usuarioLogado) {
     return <Redirect href="/notfound" />;
-    // Ou se preferir mandar direto pro login de uma vez: href="/loginCadastro"
   }
 
-  // ⚡ OTIMIZAÇÃO: Memoriza a função do Footer para evitar re-renderizações lentas do menu
-  const handleNavegacaoFooter = useCallback(
-    (aba: TabOpcoes) => {
-      if (aba === "home") {
-        router.push("/inicial");
-      }
-      if (aba === "favoritas") {
-        router.push("/favoritos");
-      }
-    },
-    [router],
-  );
+  // 🚪 EFETUA O LOGOUT REAL: Altera o estado global e redireciona de volta ao perfil
+  const handleConfirmarLogout = useCallback(() => {
+    if (setUsuarioLogado) {
+      setUsuarioLogado(false);
+    }
+    // 🚀 Passando o parâmetro na rota para a tela de Perfil saber que teve um logout
+    router.replace({
+      pathname: "/perfil",
+      params: { deslogado: "true" },
+    });
+  }, [setUsuarioLogado, router]);
 
-  // ⚡ OTIMIZAÇÃO: Memoriza o clique de login direcionando para a rota correta
-  const handleIrParaLogin = useCallback(() => {
-    router.push("/loginCadastro"); // 🚀 Ajustado para a sua página correta
-  }, [router]);
-
-  // ⚡ OTIMIZAÇÃO: Memoriza o clique de termos
-  const handleIrParaTermos = useCallback(() => {
-    router.push("/termosDeUso");
+  // ↩️ APENAS CANCELA: Retorna à tela de configurações mantendo a sessão ativa
+  const handleCancelar = useCallback(() => {
+    router.back();
   }, [router]);
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#F2F2F7]">
       <Screen>
-        <View className="w-full px-5 pt-2 items-start justify-start">
-          <TouchableOpacity
-            onPress={() => router.back()} // 🚀 Volta para a tela anterior
-            className="w-12 h-12 justify-center items-start"
-            activeOpacity={0.7}
+        {/* 📦 CONTEÚDO CENTRAL (FIEL AO SEU SEGUNDO PRINT) */}
+        <View className="flex-1 items-center justify-center px-8">
+          {/* 🚪 CIRCULO AZUL COM ÍCONE DE LOGOUT */}
+          <View className="w-24 h-24 bg-[#1D61E7] rounded-full items-center justify-center mb-8 shadow-sm">
+            <Ionicons
+              name="log-out-outline"
+              size={44}
+              color="#FFFFFF"
+              style={{ marginLeft: 4 }}
+            />
+          </View>
+
+          {/* 💬 TEXTOS DE AVISO */}
+          <Text
+            style={{ fontFamily: fonts.bold }}
+            className="text-[26px] text-slate-950 text-center leading-tight mb-4"
           >
-            <SetaAzulSemTraço width={32} height={32} />
-          </TouchableOpacity>
+            Tem certeza que deseja sair?
+          </Text>
+
+          <Text
+            style={{ fontFamily: fonts.regular }}
+            className="text-base text-gray-500 text-center leading-relaxed mb-12 max-w-[280px] pb-4"
+          >
+            Você precisará entrar novamente para acessar suas viagens e
+            configurações de conta.
+          </Text>
+
+          {/* 🔘 CONJUNTO DE BOTÕES DE AÇÃO */}
+          <View className="w-full gap-3">
+            {/* Botão Sair da Conta (Branco / Vazado com Texto Azul Correto) */}
+            <TouchableOpacity
+              onPress={handleConfirmarLogout}
+              activeOpacity={0.7}
+              className="w-full py-4 rounded-3xl items-center justify-center bg-white border border-gray-200 shadow-sm active:bg-gray-50"
+            >
+              <Text
+                style={{ fontFamily: fonts.bold, color: "#1D61E7" }} // ⚡ Cor alterada via Style nativo para ignorar heranças incorretas
+                className="text-base"
+              >
+                Sair da Conta
+              </Text>
+            </TouchableOpacity>
+
+            {/* Botão Cancelar (Nosso ButtonAzulPadrao Reutilizável) */}
+            <ButtonAzulPadrao
+              titulo="Cancelar"
+              onPress={handleCancelar}
+              style={{ marginTop: 0 }}
+            />
+          </View>
         </View>
-        /* 📝 CONTEÚDO CASO LOGADO */
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-gray-800 text-lg">Página logout</Text>
-        </View>
-        {/* Rodapé com a indicação visual fixa na aba "perfil" */}
-        <MenuFooter abaAtiva="perfil" aoMudarAba={handleNavegacaoFooter} />
       </Screen>
     </View>
   );

@@ -1,5 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link, useLocalSearchParams } from "expo-router";
+import {
+  Link,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router"; // 🚀 Adicionados useRouter e useNavigation
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -9,7 +14,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ViewStyle,
+  ViewStyle
 } from "react-native";
 import { AuthHeader } from "../../components/AuthHeader";
 import ButtonAzulPadrao from "../../components/buttonAzulPadrao";
@@ -22,6 +27,9 @@ type TabOption = "cadastrar" | "entrar";
 
 export default function LoginCadastro() {
   const params = useLocalSearchParams();
+  const router = useRouter(); // 🚀 Hook de rotas do expo
+  const navigation = useNavigation(); // 🚀 Hook para verificar o histórico de navegação
+
   const [activeTab, setActiveTab] = useState<TabOption>("entrar");
   const [rememberMe, setRememberMe] = useState(false);
   const [aceitouTermos, setAceitouTermos] = useState(false);
@@ -40,6 +48,26 @@ export default function LoginCadastro() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [registerPhone, setRegisterPhone] = useState("");
+
+  useEffect(() => {
+    const assinaturaRemoverTela = navigation.addListener(
+      "beforeRemove",
+      (e) => {
+        // Se existir histórico para voltar, deixa o fluxo seguir normal
+        if (navigation.canGoBack()) {
+          return;
+        }
+
+        // 🔒 Se NÃO tiver para onde voltar, impede o travamento/erro do GO_BACK
+        e.preventDefault();
+
+        // 🏠 Chuta o usuário direto para a tela inicial limpando a árvore de navegação
+        router.replace("/");
+      },
+    );
+
+    return () => assinaturaRemoverTela();
+  }, [navigation]);
 
   useEffect(() => {
     if (params?.aceitou === "true") {
@@ -82,7 +110,6 @@ export default function LoginCadastro() {
   return (
     <FundoAzul>
       <Screen>
-        {/* Ajustado o KeyboardAvoidingView para abranger o comportamento correto no Android e iOS */}
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 20}
@@ -126,7 +153,7 @@ export default function LoginCadastro() {
                 {/* ÁREA DE INPUTS */}
                 <View className="flex-1 px-2">
                   {activeTab === "entrar" ? (
-                    /* ENTRAR (LOGIN) - CORRIGIDO COM SCROLLVIEW */
+                    /* ENTRAR (LOGIN) */
                     <ScrollView
                       showsVerticalScrollIndicator={false}
                       contentContainerStyle={{ paddingBottom: 40 }}
@@ -162,7 +189,7 @@ export default function LoginCadastro() {
                             placeholder="Insira sua senha"
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black flex-1"
-                            secureTextEntry={!showLoginPassword} // Ajustado dinamicamente para alternar de verdade
+                            secureTextEntry={!showLoginPassword}
                             autoCapitalize="none"
                             value={loginPassword}
                             onChangeText={setLoginPassword}

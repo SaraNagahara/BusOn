@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -15,8 +15,28 @@ import InputsCodigoVerificacao from "./../../components/insiracodigoverificacao"
 import { Screen } from "./../../components/safearea";
 import { TituloCustomizado } from "./../../components/TituloCustomizado";
 
-export default function RecuperarSenha() {
+export default function RecuperarSenhaParte2() {
   const router = useRouter();
+  const params = useLocalSearchParams(); // 🚀 Captura o parâmetro 'origem' vindo da tela anterior
+
+  // 🧭 Identifica se o fluxo atual é o de alteração de e-mail do Perfil
+  const veioDoPerfil = params?.origem === "perfil";
+
+  const handleVerificarCodigo = () => {
+    if (veioDoPerfil) {
+      // 📧 FLUXO DO PERFIL: O código do novo e-mail deu certo, manda direto para a tela de sucesso (Parte 4)
+      router.push({
+        pathname: "/recuperarSenhaparte4",
+        params: { origem: "perfil" },
+      });
+    } else {
+      // 🔒 FLUXO EXTERNO: É recuperação de senha padrão, manda para criar a nova senha (Parte 3)
+      router.push({
+        pathname: "/recuperarSenhaparte3",
+        params: { origem: "externo" },
+      });
+    }
+  };
 
   return (
     <FundoAzul>
@@ -27,12 +47,17 @@ export default function RecuperarSenha() {
           className="flex-1"
         >
           <View className="flex-1 pt-4">
+            {/* 🚀 Cabeçalho dinâmico baseado no contexto */}
             <AuthHeader
-              titulo="Comece Agora"
-              subtitulo="Crie uma conta ou faça seu login"
+              titulo={veioDoPerfil ? "Conta" : "Comece Agora"}
+              subtitulo={
+                veioDoPerfil
+                  ? "Confirme sua identidade para alterar o e-mail"
+                  : "Crie uma conta ou faça seu login"
+              }
             />
             <CardBranco>
-              {/* 1. TOPO FIXO: Título fora da ScrollView */}
+              {/* 1. TOPO FIXO: Título no estilo original que você tinha */}
               <View className="pb-2">
                 <TituloCustomizado
                   titulo="Insira o Código."
@@ -41,7 +66,7 @@ export default function RecuperarSenha() {
                 />
               </View>
 
-              {/* 2. ÁREA DE ROLAGEM: Inputs e botões rolam livremente */}
+              {/* 2. ÁREA DE ROLAGEM: Restante do conteúdo */}
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 40 }}
@@ -49,29 +74,34 @@ export default function RecuperarSenha() {
                 keyboardDismissMode="on-drag"
                 className="flex-1"
               >
+                {/* 🚀 Texto explicativo adaptado conforme o objetivo do fluxo */}
                 <View className="px-2 mb-6 mt-6">
                   <Text className="text-[#424654] text-lg leading-7">
-                    Enviaremos um código de 5 dígitos para o seu e-mail.
+                    {veioDoPerfil
+                      ? "Enviaremos um código de 5 dígitos para o seu novo endereço de e-mail para validação."
+                      : "Enviaremos um código de 5 dígitos para o seu e-mail."}
                   </Text>
                 </View>
 
-                {/* Container do Input de Código */}
+                {/* Container do Input de Código (Seu componente original) */}
                 <InputsCodigoVerificacao />
 
                 {/* Botão Reenviar */}
                 <View className="px-2 mb-6 mt-6">
                   <ReenviarBotao
-                    onPress={() =>
-                      console.log("vamo trancar e abrir um estacionamento")
-                    }
+                    onPress={() => console.log("botão reenviar pressionado")}
                   />
                 </View>
 
-                {/* Botão de Confirmar */}
+                {/* Botão de Confirmar dinâmico */}
                 <View className="px-2 mb-4 mt-4">
                   <ButtonAzulPadrao
-                    titulo="Verificar Código"
-                    onPress={() => router.push("/recuperarSenhaparte3")}
+                    titulo={
+                      veioDoPerfil
+                        ? "Confirmar Novo E-mail"
+                        : "Verificar Código"
+                    }
+                    onPress={handleVerificarCodigo} // 🚀 Dispara a função inteligente
                   />
                 </View>
               </ScrollView>

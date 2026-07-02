@@ -2,10 +2,11 @@ import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
 import { MenuOpcoesBloco } from "@/components/MenuOpcoesBlocoPerfil";
 import { Screen } from "@/components/safearea";
+import { ToastNotificacao } from "@/components/ToastNotificacao"; // 🚀 Importado nosso Toast
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router"; // 🚀 Adicionado useLocalSearchParams
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, TouchableOpacity, View } from "react-native";
 import SetaAzulSemTraço from "../../assets/icons/SetaAzulSemTraco.svg";
 import { fonts } from "./../_layout";
@@ -13,6 +14,20 @@ import { fonts } from "./../_layout";
 export default function Perfil() {
   const router = useRouter();
   const { usuarioLogado } = useAuth();
+  const params = useLocalSearchParams(); // 🚀 Captura parâmetros vindos da navegação
+
+  // 🚀 Estado local para gerenciar a exibição do Toast
+  const [exibirToast, setExibirToast] = useState(false);
+
+  // 🚀 Dispara o Toast se encontrar o parâmetro "deslogado" vindo do replace
+  useEffect(() => {
+    if (params?.deslogado === "true") {
+      setExibirToast(true);
+
+      // Limpa os parâmetros da URL para evitar que reative ao rotacionar a tela
+      router.setParams({ deslogado: undefined });
+    }
+  }, [params?.deslogado]);
 
   // ⚡ OTIMIZAÇÃO: Memoriza a função do Footer
   const handleNavegacaoFooter = useCallback(
@@ -106,7 +121,18 @@ export default function Perfil() {
           </View>
         ) : (
           /* 👤 CONTEÚDO DO VISITANTE SUPER OTIMIZADO */
-          <View className="flex-1 px-5 pt-2">
+          <View className="flex-1 px-5 pt-2 position-relative">
+            {/* 🚀 TOAST EM POSIÇÃO ABSOLUTA FLUTUANDO NO TOPO DO CONTEÚDO */}
+            {exibirToast && (
+              <View className="absolute top-0 left-5 right-5 z-50 shadow-lg">
+                <ToastNotificacao
+                  mensagem="Conta deslogada com sucesso!"
+                  tipo="sucesso"
+                  aoFechar={() => setExibirToast(false)}
+                />
+              </View>
+            )}
+
             {/* 👤 HEADER DO PERFIL DE VISITANTE */}
             <View className="items-center my-6">
               <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center border-4 border-slate-50 shadow-sm mb-3">
