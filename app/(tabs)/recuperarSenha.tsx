@@ -42,7 +42,7 @@ export default function RecuperarSenha() {
           <View className="flex-1 pt-4">
             {/* 🚀 Cabeçalho dinâmico baseado na origem */}
             <AuthHeader
-              titulo={veioDoPerfil ? "Conta" : "Comece Agora"}
+              titulo={veioDoPerfil ? "Verificação" : "Comece Agora"}
               subtitulo={
                 veioDoPerfil
                   ? "Atualize seu endereço de e-mail principal"

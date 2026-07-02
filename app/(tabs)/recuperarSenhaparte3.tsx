@@ -60,7 +60,7 @@ export default function RecuperarSenhaParte3() {
         >
           <View className="flex-1 pt-4">
             <AuthHeader
-              titulo={veioDoPerfil ? "Conta" : "Comece Agora"}
+              titulo={veioDoPerfil ? "Verificação" : "Comece Agora"}
               subtitulo={
                 veioDoPerfil
                   ? "Atualize sua senha de acesso com segurança"

@@ -49,10 +49,10 @@ export default function RecuperarSenhaParte2() {
           <View className="flex-1 pt-4">
             {/* 🚀 Cabeçalho dinâmico baseado no contexto */}
             <AuthHeader
-              titulo={veioDoPerfil ? "Conta" : "Comece Agora"}
+              titulo={veioDoPerfil ? "Verificação " : "Comece Agora"}
               subtitulo={
                 veioDoPerfil
-                  ? "Confirme sua identidade para alterar o e-mail"
+                  ? "Digite o código enviado para o seu novo e-mail"
                   : "Crie uma conta ou faça seu login"
               }
             />
@@ -83,8 +83,13 @@ export default function RecuperarSenhaParte2() {
                   </Text>
                 </View>
 
-                {/* Container do Input de Código (Seu componente original) */}
-                <InputsCodigoVerificacao />
+                {/* 🛡️ CONTAINER RESPONSIVO ADICIONADO: 
+                    Garante que os 5 blocos fiquem centralizados e caibam em qualquer largura de tela sem quebrar */}
+                <View className="w-full justify-center items-center my-2 px-2">
+                  <View className="w-full max-w-[340px] items-center justify-center">
+                    <InputsCodigoVerificacao />
+                  </View>
+                </View>
 
                 {/* Botão Reenviar */}
                 <View className="px-2 mb-6 mt-6">

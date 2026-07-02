@@ -3,16 +3,19 @@ import { NativeSyntheticEvent, TextInput, View } from "react-native";
 
 // Definimos o que o nosso componente reutilizável pode receber
 interface CodigoVerificacaoProps {
-  onCodeComplete?: (code: string) => void; // Dispara quando o usuário digita os 4 números
+  onCodeComplete?: (code: string) => void; // 🚀 Agora dispara quando o usuário digita os 5 números
 }
 
 export default function InputsCodigoVerificacao({
   onCodeComplete,
 }: CodigoVerificacaoProps) {
-  const [code, setCode] = useState<string[]>(["", "", "", ""]);
+  // 🚀 CORRIGIDO: Agora o estado inicial tem 5 posições
+  const [code, setCode] = useState<string[]>(["", "", "", "", ""]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
+  // 🚀 Seus 5 refs perfeitos aqui
   const inputs = [
+    useRef<TextInput>(null),
     useRef<TextInput>(null),
     useRef<TextInput>(null),
     useRef<TextInput>(null),
@@ -27,17 +30,18 @@ export default function InputsCodigoVerificacao({
 
     // Junta o array para mandar o texto completo para o componente pai
     const fullCode = newCode.join("");
-    if (onCodeComplete && fullCode.length === 4) {
+    // 🚀 CORRIGIDO: Verifica se atingiu os 5 dígitos
+    if (onCodeComplete && fullCode.length === 5) {
       onCodeComplete(fullCode);
     }
 
-    if (numericText && index < 3) {
+    // 🚀 CORRIGIDO: Se digitou e não for o último (índice 4), pula pro próximo
+    if (numericText && index < 4) {
       inputs[index + 1].current?.focus();
     }
   };
 
   const handleKeyPress = (
-    // CORRIGIDO: Removido o tipo deprecated e usada a abordagem genérica compatível
     e: NativeSyntheticEvent<{ key: string }>,
     index: number,
   ) => {
@@ -63,9 +67,9 @@ export default function InputsCodigoVerificacao({
           className="rounded-2xl bg-white text-2xl text-black font-bold"
           style={[
             {
-              width: 64,
+              width: 56, // 💡 Reduzi levemente de 64 para 56 para garantir que 5 blocos caibam bem em telas menores
               height: 64,
-              marginRight: index !== code.length - 1 ? 12 : 0,
+              marginRight: index !== code.length - 1 ? 10 : 0, // Ajustado o espaçamento dinâmico
               borderWidth: 2,
               borderRadius: 16,
               backgroundColor: "white",

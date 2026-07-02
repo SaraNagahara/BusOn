@@ -40,7 +40,7 @@ export default function Index() {
       <Screen>
         <View className="flex-1 items-start justify-center px-8">
           {/*Redirect temporario */}
-          <Redirect href={"/inicial"} />
+          <Redirect href={"/configuracoesDoUsuario"} />
           <View className="w-32 h-10 mb-4 items-start">
             <LogoApp
               width="100%"
