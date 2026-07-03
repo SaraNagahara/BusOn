@@ -50,16 +50,16 @@ export default function ConfiguracoesDoUsuario() {
           params: { origem: "perfil" },
         }),
     },
-    {
-      titulo: "Alterar telefone",
-      iconeNome: "call-outline" as const,
-      // 🚀 ADICIONADO: Passando a origem para a tela de telefone
-      onPress: () =>
-        router.push({
-          pathname: "/alterarTelefone",
-          params: { origem: "perfil" },
-        }),
-    },
+    // {
+    //   titulo: "Alterar telefone",
+    //   iconeNome: "call-outline" as const,
+    //   // 🚀 ADICIONADO: Passando a origem para a tela de telefone
+    //   onPress: () =>
+    //     router.push({
+    //       pathname: "/alterarTelefone",
+    //       params: { origem: "perfil" },
+    //     }),
+    // },
     {
       titulo: "Termos e condições",
       iconeNome: "document-text-outline" as const,

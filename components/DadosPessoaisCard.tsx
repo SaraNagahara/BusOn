@@ -8,7 +8,7 @@ interface UsuarioDadosProps {
   usuario?: {
     nome: string;
     email: string;
-    telefone: string;
+    // telefone: string;
   };
 }
 
@@ -18,7 +18,7 @@ export const DadosPessoaisCard = memo(function DadosPessoaisCard({
   // ⚡ Valores padrão caso o banco de dados demore a carregar ou venha nulo
   const nome = usuario?.nome || "-";
   const email = usuario?.email || "-";
-  const telefone = usuario?.telefone || "-";
+  // const telefone = usuario?.telefone || "-";
 
   return (
     <View className="w-full bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm">
@@ -79,7 +79,7 @@ export const DadosPessoaisCard = memo(function DadosPessoaisCard({
       </View>
 
       {/* 📞 CAMPO: TELEFONE */}
-      <View className="w-full mb-5">
+      {/* <View className="w-full mb-5">
         <Text
           style={{ fontFamily: fonts.regular }}
           className="text-sm text-gray-400 mb-1.5"
@@ -100,7 +100,7 @@ export const DadosPessoaisCard = memo(function DadosPessoaisCard({
             {telefone}
           </Text>
         </View>
-      </View>
+      </View> */}
     </View>
   );
 });

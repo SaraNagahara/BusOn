@@ -44,7 +44,7 @@ export default function dadosPerfilDoUsuario() {
   const dadosDoBanco = {
     nome: "Fulano de Tal",
     email: "fulano.de.tal@email.com",
-    telefone: "(11) 99999-9999",
+    // telefone: "(11) 99999-9999",
   };
 
   return (
