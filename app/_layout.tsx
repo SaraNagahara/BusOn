@@ -1,6 +1,8 @@
-import { AuthProvider } from "@/context/AuthProvider";
+import { AuthProvider, useAuth } from "@/context/AuthProvider";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { FavoritosProvider } from "../context/FavoritosProvider";
 
@@ -11,9 +13,7 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 
-{
-  /*estilos da fonte para serem usadas */
-}
+import "./global.css";
 
 export const fonts = {
   regular: "Inter_400Regular",
@@ -22,7 +22,57 @@ export const fonts = {
   bold: "Inter_700Bold",
 };
 
-import "./global.css";
+// 🛡️ COMPONENTE GUARDIÃO DE ROTAS
+function ProtetorDeRotas() {
+  const { usuarioLogado } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+  const [verificando, setVerificando] = useState(true);
+
+  useEffect(() => {
+    // 📝 Adicione aqui as páginas que QUALQUER UM pode ver (deslogado)
+    const rotasPublicas = [
+      "", // 👈 Seu index.tsx (Tela de Boas-Vindas)
+      "index", // 👈 Variação do index detectada pelo Expo
+      "termosDeUso", // 👈 🚀 IMPORTANTE: Adicionado para o link clicar e abrir sem barrar!
+      "inicial", // 👈 Sua Home (inicial.tsx)
+      "loginCadastro", // 👈 Tela de Autenticação
+      "notfound", // 👈 Destino de bloqueio
+    ];
+
+    // Pega o nome do segmento atual da URL do Expo Router
+    const rotaAtual = segments[0] || "";
+
+    // Se a rota não for pública e o usuário NÃO estiver logado...
+    const ehRotaProtegida = !rotasPublicas.includes(rotaAtual);
+
+    if (ehRotaProtegida && !usuarioLogado) {
+      // 🛑 Bloqueia o acesso e joga direto para a tela de erro
+      router.replace("/notfound");
+    } else {
+      // Libera o acesso para a página
+      setVerificando(false);
+    }
+  }, [usuarioLogado, segments]);
+
+  // Enquanto valida se tem sessão ativa, mostra uma tela de transição limpa
+  if (verificando && !usuarioLogado) {
+    return (
+      <View className="flex-1 bg-[#F8FAFC] justify-center items-center">
+        <ActivityIndicator size="large" color="#0040A1" />
+      </View>
+    );
+  }
+
+  // Se estiver tudo OK, renderiza o Stack normalmente
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    />
+  );
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -38,14 +88,10 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      {/* 👈 ENVOLVEU TODO O APP: Salva os favoritos ao mudar de página pelo footer */}
       <AuthProvider>
         <FavoritosProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          />
+          {/* 🔐 O protetor precisa rodar aqui dentro para poder enxergar o useAuth() */}
+          <ProtetorDeRotas />
         </FavoritosProvider>
       </AuthProvider>
     </SafeAreaProvider>

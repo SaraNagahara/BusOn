@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, router } from "expo-router"; // Importado useLocalSearchParams
+import { router } from "expo-router"; // Importado useLocalSearchParams
 import { useState } from "react"; // Importado useEffect
 import { Pressable, Text, View } from "react-native";
 import { FundoAzul } from "../../components/fundoazul";
@@ -40,7 +40,7 @@ export default function Index() {
       <Screen>
         <View className="flex-1 items-start justify-center px-8">
           {/*Redirect temporario */}
-          <Redirect href={"/configuracoesDoUsuario"} />
+          {/* <Redirect href={"/configuracoesDoUsuario"} /> */}
           <View className="w-32 h-10 mb-4 items-start">
             <LogoApp
               width="100%"
