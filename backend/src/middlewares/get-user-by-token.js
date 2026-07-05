@@ -1,3 +1,5 @@
+const User = require("../models/User");
+
 const getToken = require("./getToken");
 const jwt = require("jsonwebtoken");
 
@@ -25,3 +27,5 @@ const getUserByToken = async (req, res) => {
   });
 }
 };
+
+module.exports = getUserByToken;
