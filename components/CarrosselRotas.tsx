@@ -107,11 +107,12 @@ export function CarrosselRotas({
         style={{ fontFamily: fonts.medium }}
         className="text-gray-500 text-sm mb-2 px-1"
       >
-        {estaLogado
+        {/* {estaLogado
           ? filtro === "rodoviaria"
             ? "Suas buscas partindo da Rodoviária"
             : "Suas buscas partindo do Destino Final"
-          : "Histórico de buscas recentes"}
+          : "Histórico de buscas recentes"} */}
+        Suas buscas de São Roque - SP
       </Text>
 
       <FlatList

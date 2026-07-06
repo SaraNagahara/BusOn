@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import { fonts } from "../app/_layout";
-import LogoApp from "../assets/icons/logoApp.svg"; // 👈 Importado conforme seu caminho de assets
+import LogoApp from "../assets/icons/logoAppAzul.svg"; // 👈 Importado conforme seu caminho de assets
 
 {
   /*tem q colocar uma logo escurecida no photoshop pq da pra ver nao */
