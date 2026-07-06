@@ -1,6 +1,6 @@
+import { fonts } from "@/app/_layout";
 import { useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
-import { fonts } from "../app/_layout";
 import LogoApp from "../assets/icons/logoAppAzul.svg"; // 👈 Importado conforme seu caminho de assets
 
 {

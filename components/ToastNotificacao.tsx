@@ -1,7 +1,7 @@
+import { fonts } from "@/app/_layout";
 import { Ionicons } from "@expo/vector-icons";
 import { memo, useEffect } from "react"; // 🚀 Adicionado useEffect
 import { Text, TouchableOpacity, View } from "react-native";
-import { fonts } from "../app/_layout";
 
 interface ToastNotificacaoProps {
   mensagem: string;

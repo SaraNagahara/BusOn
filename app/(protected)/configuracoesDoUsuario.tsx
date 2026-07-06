@@ -1,13 +1,13 @@
+import { fonts } from "@/app/_layout";
+import SetaAzulSemTraço from "@/assets/icons/SetaAzulSemTraco.svg";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
+import { MenuOpcoesBloco } from "@/components/MenuOpcoesBlocoPerfil";
 import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import SetaAzulSemTraço from "../../assets/icons/SetaAzulSemTraco.svg";
-import { MenuOpcoesBloco } from "../../components/MenuOpcoesBlocoPerfil";
-import { fonts } from "../_layout";
 
 export default function ConfiguracoesDoUsuario() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function ConfiguracoesDoUsuario() {
 
   // 🛡️ Ajustado para a rota padrão do seu 404 do Expo Router
   if (!usuarioLogado) {
-    return <Redirect href="/+not-found" />;
+    return <Redirect href="/notfound" />;
   }
 
   // ⚡ OTIMIZAÇÃO: Memoriza a função do Footer

@@ -1,7 +1,7 @@
+import { fonts } from "@/app/_layout";
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
 import { Text, View } from "react-native";
-import { fonts } from "../app/_layout";
 
 // 📋 Definição dos dados que o componente espera receber do banco de dados
 interface UsuarioDadosProps {

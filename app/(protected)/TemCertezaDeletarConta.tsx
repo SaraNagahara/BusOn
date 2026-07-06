@@ -1,9 +1,9 @@
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao"; // 🚀 Importado seu botão padrão
+import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
-import ButtonAzulPadrao from "./../../components/buttonAzulPadrao"; // 🚀 Importado seu botão padrão
-import { Screen } from "./../../components/safearea";
 
 export default function TemCertezaDeletarConta() {
   const router = useRouter();

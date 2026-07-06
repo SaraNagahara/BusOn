@@ -1,7 +1,7 @@
+import { fonts } from "@/app/_layout"; // Ajuste o caminho do seu _layout se precisar
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
 import { Pressable, Text, View } from "react-native";
-import { fonts } from "../app/_layout"; // Ajuste o caminho do seu _layout se precisar
 
 // 📋 Definição de cada item individual do menu
 export interface ItemMenuOpcao {

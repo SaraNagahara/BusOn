@@ -1,5 +1,5 @@
+import { fonts } from "@/app/_layout";
 import { Pressable, Text, View } from "react-native";
-import { fonts } from "../app/_layout";
 
 export type TipoLinhaOpcoes = "todas" | "urbanas" | "intermunicipais";
 

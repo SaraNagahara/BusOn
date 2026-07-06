@@ -1,5 +1,5 @@
+import { fonts } from "@/app/_layout";
 import { Text, View } from "react-native";
-import { fonts } from "../app/_layout";
 import { TipoLinhaOpcoes } from "./FiltroBusca";
 
 interface TituloFiltroProps {

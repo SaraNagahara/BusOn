@@ -1,3 +1,6 @@
+import { fonts } from "@/app/_layout";
+import SetaAzulSemTraço from "@/assets/icons/SetaAzulSemTraco.svg";
+import { DadosPessoaisCard } from "@/components/DadosPessoaisCard";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
 import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
@@ -5,9 +8,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import { useCallback } from "react"; // ⚡ Importado para congelar as funções na memória
 import { Text, TouchableOpacity, View } from "react-native";
-import SetaAzulSemTraço from "../../assets/icons/SetaAzulSemTraco.svg";
-import { DadosPessoaisCard } from "../../components/DadosPessoaisCard";
-import { fonts } from "../_layout";
 
 export default function dadosPerfilDoUsuario() {
   const router = useRouter();

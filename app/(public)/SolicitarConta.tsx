@@ -1,8 +1,8 @@
+import { fonts } from "@/app/_layout";
+import { Screen } from "@/components/safearea";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import { Screen } from "./../../components/safearea";
-import { fonts } from "./../_layout";
 
 export default function SolicitarConta() {
   const router = useRouter();

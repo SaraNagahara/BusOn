@@ -1,14 +1,14 @@
+import CheckSimbolo from "@/assets/icons/check-circle.svg";
+import { AuthHeader } from "@/components/AuthHeader";
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
+import CardBranco from "@/components/CardBranco";
+import { FundoAzul } from "@/components/fundoazul";
+import { Screen } from "@/components/safearea";
+import { TituloCustomizadoAzul } from "@/components/tituloSenhaAlterada";
 import { useAuth } from "@/context/AuthProvider";
 import { useLocalSearchParams, useRouter } from "expo-router"; // 🚀 Adicionado useLocalSearchParams
 import { useEffect } from "react";
 import { BackHandler, Text, View } from "react-native";
-import CheckSimbolo from "../../assets/icons/check-circle.svg";
-import { AuthHeader } from "./../../components/AuthHeader";
-import ButtonAzulPadrao from "./../../components/buttonAzulPadrao";
-import CardBranco from "./../../components/CardBranco";
-import { FundoAzul } from "./../../components/fundoazul";
-import { Screen } from "./../../components/safearea";
-import { TituloCustomizadoAzul } from "./../../components/tituloSenhaAlterada";
 
 export default function RecuperarSenha() {
   const router = useRouter();

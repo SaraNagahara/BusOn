@@ -1,10 +1,10 @@
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
+import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { BackHandler, Text, TouchableOpacity, View } from "react-native";
-import ButtonAzulPadrao from "./../../components/buttonAzulPadrao";
-import { Screen } from "./../../components/safearea";
 
 export default function ContaDeletadaSucesso() {
   const router = useRouter();

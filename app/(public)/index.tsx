@@ -1,11 +1,11 @@
+import { fonts } from "@/app/_layout";
+import LogoApp from "@/assets/icons/logoApp.svg";
+import { FundoAzul } from "@/components/fundoazul";
+import { Screen } from "@/components/safearea";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router"; // Importado useLocalSearchParams
 import { useState } from "react"; // Importado useEffect
 import { Pressable, Text, View } from "react-native";
-import { FundoAzul } from "../../components/fundoazul";
-import LogoApp from "./../../assets/icons/logoApp.svg";
-import { Screen } from "./../../components/safearea";
-import { fonts } from "./../_layout";
 
 export default function Index() {
   // const [aceitouTermos, setAceitouTermos] = useState(false);

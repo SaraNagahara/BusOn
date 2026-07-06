@@ -3,9 +3,9 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 // Importe seus ícones
+import { fonts } from "@/app/_layout";
 import LogoApp from "../assets/icons/logoApp.svg";
 import SetaBrancaEsquerda from "../assets/icons/setabrancacomtraco.svg";
-import { fonts } from "./../app/_layout";
 
 interface AuthHeaderProps {
   titulo: string;

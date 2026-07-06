@@ -1,7 +1,7 @@
+import { fonts } from "@/app/_layout";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { fonts } from "../app/_layout";
 
 export type FiltroOpcoes = "rodoviaria" | "destino";
 

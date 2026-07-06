@@ -1,3 +1,4 @@
+import { fonts } from "@/app/_layout";
 import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
 import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
@@ -5,7 +6,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { fonts } from "../_layout"; // Ajuste o caminho se necessário
 
 export default function TemCertezaLogout() {
   const router = useRouter();

@@ -1,3 +1,6 @@
+import { AuthHeader } from "@/components/AuthHeader";
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
+import CardBranco from "@/components/CardBranco";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Link,
@@ -14,14 +17,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ViewStyle
+  ViewStyle,
 } from "react-native";
-import { AuthHeader } from "../../components/AuthHeader";
-import ButtonAzulPadrao from "../../components/buttonAzulPadrao";
-import CardBranco from "../../components/CardBranco";
 
-import { FundoAzul } from "../../components/fundoazul";
-import { Screen } from "../../components/safearea";
+import { FundoAzul } from "@/components/fundoazul";
+import { Screen } from "@/components/safearea";
 
 type TabOption = "cadastrar" | "entrar";
 

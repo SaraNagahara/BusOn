@@ -1,3 +1,9 @@
+import { AuthHeader } from "@/components/AuthHeader";
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
+import CardBranco from "@/components/CardBranco";
+import { FundoAzul } from "@/components/fundoazul";
+import { Screen } from "@/components/safearea";
+import { TituloCustomizado } from "@/components/TituloCustomizado";
 import { useAuth } from "@/context/AuthProvider"; // 🚀 Importado seu hook de autenticação
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router"; // 🚀 Adicionados useLocalSearchParams e Redirect
@@ -9,12 +15,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { AuthHeader } from "./../../components/AuthHeader";
-import ButtonAzulPadrao from "./../../components/buttonAzulPadrao";
-import CardBranco from "./../../components/CardBranco";
-import { FundoAzul } from "./../../components/fundoazul";
-import { Screen } from "./../../components/safearea";
-import { TituloCustomizado } from "./../../components/TituloCustomizado";
 
 export default function RecuperarSenha() {
   const router = useRouter();

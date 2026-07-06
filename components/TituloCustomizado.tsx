@@ -1,6 +1,6 @@
+import { fonts } from "@/app/_layout"; // Certifique-se de que este caminho está correto
 import React from "react";
 import { Text, View } from "react-native";
-import { fonts } from "./../app/_layout"; // Certifique-se de que este caminho está correto
 
 // IMPORTANDO SEU SVG PADRÃO
 // (conforme você baixou e chamou de tracinho.svg)

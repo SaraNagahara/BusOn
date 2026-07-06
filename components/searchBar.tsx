@@ -1,6 +1,6 @@
+import { fonts } from "@/app/_layout";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, TextInput, View } from "react-native";
-import { fonts } from "../app/_layout";
 
 interface SearchBarProps {
   placeholder?: string;

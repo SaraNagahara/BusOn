@@ -1,7 +1,7 @@
+import { fonts } from "@/app/_layout";
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react"; // ⚡ Importado useMemo para travar o reprocessamento da busca
 import { FlatList, Pressable, Text, View } from "react-native";
-import { fonts } from "../app/_layout";
 import { useFavoritos } from "../context/FavoritosProvider";
 import { TipoLinhaOpcoes } from "./FiltroBusca";
 

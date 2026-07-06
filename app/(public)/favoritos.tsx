@@ -1,3 +1,4 @@
+import { fonts } from "@/app/_layout";
 import { FiltroBusca, TipoLinhaOpcoes } from "@/components/FiltroBusca";
 import { HomeHeader } from "@/components/HomeHeader";
 import { ListaResultadosBusca } from "@/components/ListaResultadosBusca";
@@ -21,7 +22,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { fonts } from "./../_layout";
 
 export default function Favoritos() {
   const router = useRouter();

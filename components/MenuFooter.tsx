@@ -1,7 +1,7 @@
+import { fonts } from "@/app/_layout";
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react"; // ⚡ Importado memo para travar re-renders desnecessários
 import { Platform, Pressable, Text, View } from "react-native";
-import { fonts } from "../app/_layout";
 
 export type TabOpcoes = "home" | "favoritas" | "perfil";
 

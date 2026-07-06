@@ -1,3 +1,6 @@
+import { fonts } from "@/app/_layout";
+import { FundoAzul } from "@/components/fundoazul";
+import { Screen } from "@/components/safearea";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -8,9 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { FundoAzul } from "../../components/fundoazul";
-import { Screen } from "./../../components/safearea";
-import { fonts } from "./../_layout";
 
 export default function termosDeUso() {
   const scrollViewRef = useRef<ScrollView>(null);

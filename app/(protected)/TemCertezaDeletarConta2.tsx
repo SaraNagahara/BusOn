@@ -1,19 +1,19 @@
+import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
+import PasswordInputField from "@/components/PasswordInputField"; // 🚀 Seu componente padrão de senha
+import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import ButtonAzulPadrao from "./../../components/buttonAzulPadrao";
-import PasswordInputField from "./../../components/PasswordInputField"; // 🚀 Seu componente padrão de senha
-import { Screen } from "./../../components/safearea";
 
 export default function TemCertezaDeletarConta2() {
   const router = useRouter();
