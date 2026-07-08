@@ -3,7 +3,12 @@ import { FiltroBusca, TipoLinhaOpcoes } from "@/components/FiltroBusca";
 import { HomeHeader } from "@/components/HomeHeader";
 import { ListaResultadosBusca } from "@/components/ListaResultadosBusca";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
+import {
+  FiltroOpcoes,
+  ProximasSaidas,
+} from "@/components/proximasSaidasFiltro";
 import { RotaFavoritaProps, RotasFavoritas } from "@/components/RotasFavoritas";
+import { Screen } from "@/components/safearea";
 import { SearchBar } from "@/components/searchBar";
 import { TituloFiltro } from "@/components/TituloFiltro";
 import { ROTAS_MOCK } from "@/constants/rotasDados";
@@ -12,11 +17,6 @@ import { useFavoritos } from "@/context/FavoritosProvider";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"; // ⚡ Importados useMemo e useCallback
 import { Alert, TextInput, View } from "react-native";
-import {
-  FiltroOpcoes,
-  ProximasSaidas,
-} from "../../components/proximasSaidasFiltro";
-import { Screen } from "../../components/safearea";
 
 const obterDataBrasilia = (): Date => {
   const agora = new Date();

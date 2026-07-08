@@ -3,7 +3,7 @@ import LogoApp from "@/assets/icons/logoApp.svg";
 import { FundoAzul } from "@/components/fundoazul";
 import { Screen } from "@/components/safearea";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router"; // Importado useLocalSearchParams
+import { Redirect, router } from "expo-router"; // Importado useLocalSearchParams
 import { useState } from "react"; // Importado useEffect
 import { Pressable, Text, View } from "react-native";
 
@@ -40,8 +40,9 @@ export default function Index() {
       <Screen>
         <View className="flex-1 items-start justify-center px-8">
           {/*Redirect temporario */}
-          {/* <Redirect href={"/configuracoesDoUsuario"} /> */}
+          <Redirect href={"/todosHorariosDaRotaSelecionada"} />
           <View className="w-32 h-10 mb-4 items-start">
+            
             <LogoApp
               width="100%"
               height="100%"
