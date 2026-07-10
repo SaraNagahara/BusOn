@@ -84,27 +84,50 @@ export default function LoginCadastro() {
     shadowRadius: 2,
   };
 
-  const handleLogin = () => {
-    console.log("Dados de Login:", { loginEmail, loginPassword, rememberMe });
+  const handleLogin = async () => {
+    const response = await fetch(
+      "https://noncontributing-spankingly-marianela.ngrok-free.dev/users/login",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          loginEmail,
+          loginPassword,
+        }),
+      },
+    );
+
+    const dataLogin = await response.json();
+    console.log(dataLogin);
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (registerPassword !== registerConfirmPassword) {
       alert("As senhas não coincidem!");
       return;
     }
-    if (!aceitouTermos) {
-      alert(
-        "Você precisa aceitar os Termos de Uso e Políticas de Privacidade para prosseguir.",
-      );
-      return;
-    }
-    console.log("Dados de Cadastro:", {
-      registerName,
-      registerEmail,
-      registerPassword,
-      registerPhone,
-    });
+
+    const response = await fetch(
+      "https://noncontributing-spankingly-marianela.ngrok-free.dev/users/register",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          registerName,
+          registerEmail,
+          registerPassword,
+          registerConfirmPassword,
+          registerPhone,
+        }),
+      },
+    );
+
+    const dataRegister = await response.json();
+    console.log(dataRegister);
   };
 
   return (
