@@ -69,13 +69,6 @@ export default function LoginCadastro() {
     return () => assinaturaRemoverTela();
   }, [navigation]);
 
-  useEffect(() => {
-    if (params?.aceitou === "true") {
-      setActiveTab("cadastrar");
-      setAceitouTermos(true);
-    }
-  }, [params?.aceitou]);
-
   const activeShadow: ViewStyle = {
     elevation: 3,
     shadowColor: "#000",

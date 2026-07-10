@@ -14,12 +14,11 @@ export default function HeaderLinhaSelecionada({
   onPressFiltro,
 }: HeaderLinhaSelecionadaProps) {
   return (
-    <View className="w-full flex-row items-center justify-between py-4 bg-[#F8FAFC]">
-      
+    <View className="w-full flex-row items-center justify-between py-4">
       {/* 📝 LADO ESQUERDO: Textos Informativos */}
       <View className="flex-1 pr-4">
         {/* Título Principal Dinâmico */}
-        <Text 
+        <Text
           style={{ fontFamily: fonts.bold }}
           className="text-[#1A1C1E] text-2xl uppercase tracking-tight"
         >
@@ -30,7 +29,7 @@ export default function HeaderLinhaSelecionada({
         <View className="flex-row items-center mt-1">
           {/* Usando o relógio do Feather para combinar o estilo dos traços */}
           <Feather name="clock" size={14} color="#5E6370" />
-          <Text 
+          <Text
             style={{ fontFamily: fonts.regular }}
             className="text-[#5E6370] text-sm ml-1.5"
           >
@@ -44,13 +43,12 @@ export default function HeaderLinhaSelecionada({
         <TouchableOpacity
           onPress={onPressFiltro}
           activeOpacity={0.7}
-          className="w-12 h-12 bg-[#2B47FC] rounded-full items-center justify-center shadow-sm"
+          className="w-12 h-12 bg-[#3F5CC4] rounded-full items-center justify-center shadow-sm"
         >
           {/* 🌟 ÍCONE ATUALIZADO: Funil vazado idêntico ao da sua imagem */}
           <Feather name="filter" size={20} color="white" />
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }
