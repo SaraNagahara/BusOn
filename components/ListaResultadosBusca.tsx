@@ -1,6 +1,7 @@
 import { fonts } from "@/app/_layout";
+import { ROTAS_MOCK } from "@/constants/rotasDados";
 import { Ionicons } from "@expo/vector-icons";
-import { useMemo, useState } from "react"; // ⚡ Importado useMemo para travar o reprocessamento da busca
+import { useMemo, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { useFavoritos } from "../context/FavoritosProvider";
 import { TipoLinhaOpcoes } from "./FiltroBusca";
@@ -27,65 +28,6 @@ interface ListaResultadosBuscaProps {
   ) => void;
 }
 
-const ROTAS_FICTICIAS: RotaResultadoProps[] = [
-  {
-    id: "1",
-    destino: "Canguera",
-    origem: "Terminal de São Roque",
-    proximoHorario: "18:10",
-    tipo: "urbanas",
-  },
-  {
-    id: "2",
-    destino: "Sorocaba",
-    origem: "Terminal de São Roque",
-    proximoHorario: "16:10",
-    tipo: "intermunicipais",
-  },
-  {
-    id: "3",
-    destino: "Guaçu",
-    origem: "Terminal de São Roque",
-    proximoHorario: "17:35",
-    tipo: "urbanas",
-  },
-  {
-    id: "4",
-    destino: "Mairinque",
-    origem: "Terminal de São Roque",
-    proximoHorario: "15:45",
-    tipo: "intermunicipais",
-  },
-  {
-    id: "5",
-    destino: "Mailasqui",
-    origem: "Terminal de São Roque",
-    proximoHorario: "19:00",
-    tipo: "urbanas",
-  },
-  {
-    id: "6",
-    destino: "São João novo",
-    origem: "Terminal de São Roque",
-    proximoHorario: "20:15",
-    tipo: "urbanas",
-  },
-  {
-    id: "7",
-    destino: "São Paulo",
-    origem: "Terminal de São Roque",
-    proximoHorario: "06:30",
-    tipo: "intermunicipais",
-  },
-  {
-    id: "8",
-    destino: "Ibiúna",
-    origem: "Terminal de São Roque",
-    proximoHorario: "21:40",
-    tipo: "intermunicipais",
-  },
-];
-
 export function ListaResultadosBusca({
   filtroCategoria,
   textoBusca,
@@ -98,11 +40,9 @@ export function ListaResultadosBusca({
   const [mostrarTudo, setMostrarTudo] = useState(false);
   const { meusAlertas } = useFavoritos();
 
-  // ⚡ OTIMIZAÇÃO 1: O filtro complexo de busca agora está memorizado.
-  // Ele NÃO roda se o usuário clicar em algo que não altere as propriedades abaixo.
   const rotasFiltradas = useMemo(() => {
-    return ROTAS_FICTICIAS.filter((rota) => {
-      if (apenasFavoritos && !listaFavoritosIds.includes(rota.id)) {
+    return ROTAS_MOCK.filter((rota) => {
+      if (apenasFavoritos && !listaFavoritosIds.includes(String(rota.id))) {
         return false;
       }
 
@@ -116,10 +56,21 @@ export function ListaResultadosBusca({
         (destino.startsWith("s. joão") && termo.startsWith("sao joao"));
 
       return atendeCategoria && atendeBusca;
+    }).map((rota): RotaResultadoProps => {
+      // Extrai o primeiro horário disponível como exemplo para o card
+      const primeiroBloco = rota.horarios[0];
+      const primeiroHorario = primeiroBloco?.itens[0]?.hora || "--:--";
+
+      return {
+        id: String(rota.id),
+        destino: rota.destino,
+        origem: "Terminal de São Roque",
+        proximoHorario: primeiroHorario,
+        tipo: rota.tipo as TipoLinhaOpcoes,
+      };
     });
   }, [filtroCategoria, textoBusca, listaFavoritosIds, apenasFavoritos]);
 
-  // ⚡ OTIMIZAÇÃO 2: Controla o slice de dados baseando-se no cache acima
   const dadosExibidos = useMemo(() => {
     return mostrarTudo ? rotasFiltradas : rotasFiltradas.slice(0, 4);
   }, [mostrarTudo, rotasFiltradas]);
@@ -128,8 +79,6 @@ export function ListaResultadosBusca({
 
   const renderCardRota = ({ item }: { item: RotaResultadoProps }) => {
     const isFavorito = listaFavoritosIds.includes(item.id);
-
-    // Mantido o filtro para os alertas associados à rota específica
     const alertasDessaRota = meusAlertas.filter(
       (alerta) => alerta.idRota === item.id,
     );
@@ -162,7 +111,24 @@ export function ListaResultadosBusca({
               style={{ fontFamily: fonts.medium }}
               className="text-[#334155] text-sm"
             >
-              Próximo as {item.proximoHorario}
+              Próximo às {item.proximoHorario}
+              {" - "}
+              {/* Estilo mais sóbrio, sem sublinhado, usando a cor do título */}
+              <Text
+                style={{ fontFamily: fonts.medium }}
+                className="text-[#2449AE]/70 text-xs ml-2 uppercase tracking-wide"
+              >
+                Ver mais
+              </Text>
+            </Text>
+          )}
+
+          {apenasFavoritos && (
+            <Text
+              style={{ fontFamily: fonts.medium }}
+              className="text-[#2449AE]/70 text-sm"
+            >
+              Ver horários
             </Text>
           )}
 
@@ -228,7 +194,6 @@ export function ListaResultadosBusca({
     );
   };
 
-  // ⚡ OTIMIZAÇÃO 3: Isolamos o componente do rodapé para evitar recriação visual desnecessária na lista
   const renderFooter = () => {
     if (!mostrarTudo && rotasRestantes > 0) {
       return (
@@ -258,7 +223,6 @@ export function ListaResultadosBusca({
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 20 }}
       ListFooterComponent={renderFooter}
-      // ⚡ Propriedades de performance nativa do FlatList
       initialNumToRender={4}
       maxToRenderPerBatch={4}
       windowSize={5}

@@ -221,14 +221,18 @@ export default function Favoritos() {
     setModalVisible(false);
   };
 
-  const HORARIOS_DISPONIVEIS_MOCK = [
-    "06:30",
-    "12:15",
-    "15:45",
-    "18:10",
-    "20:15",
-    "21:40",
-  ];
+  const horariosDisponiveis = useMemo(() => {
+    if (!rotaSelecionadaId) return [];
+
+    const rota = ROTAS_MOCK.find((r) => String(r.id) === rotaSelecionadaId);
+    if (!rota) return [];
+
+    // Pega todos os horários de todos os blocos da rota
+    return rota.horarios.flatMap((bloco) =>
+      bloco.itens.map((item) => item.hora),
+    );
+  }, [rotaSelecionadaId]);
+
   const DIAS_SEMANA_MOCK = [
     { label: "S", id: "seg" },
     { label: "T", id: "ter" },
@@ -238,6 +242,13 @@ export default function Favoritos() {
     { label: "S", id: "sab" },
     { label: "D", id: "dom" },
   ];
+
+  const [historicoIds, setHistoricoIds] = useState<string[]>([
+    "1",
+    "2",
+    "3",
+    "4",
+  ]);
 
   const favoritosFiltrados = useMemo(() => {
     return ROTAS_MOCK.filter((rota) => {
@@ -255,6 +266,12 @@ export default function Favoritos() {
       );
     });
   }, [busca, filtroBuscaAtivo, listaFavoritosIds]);
+
+  const handleSelecionarRota = useCallback((id: string) => {
+    setHistoricoIds((prev) => [id, ...prev.filter((i) => i !== id)]);
+
+    router.push(`/horarios/${id}`);
+  }, []);
 
   return (
     <View className="flex-1 bg-white">
@@ -336,6 +353,7 @@ export default function Favoritos() {
                   aoAlternarFavorito={handleAlternarFavorito}
                   apenasFavoritos={true}
                   aoClicarNoAlerta={handleAbrirConfigurarAlerta}
+                  aoClicarNaRota={(rota) => handleSelecionarRota(rota.id)}
                 />
               </View>
             )}
@@ -385,15 +403,17 @@ export default function Favoritos() {
                   <Ionicons name="close" size={20} color="#64748B" />
                 </Pressable>
               </View>
-
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xs text-slate-400 uppercase tracking-widest mb-3"
               >
                 Horário de partida
               </Text>
+              // Dentro do seu Modal, procure pela parte dos "Horário de
+              partida":
               <View className="flex-row flex-wrap gap-2 mb-6">
-                {HORARIOS_DISPONIVEIS_MOCK.map((hr) => {
+                {horariosDisponiveis.map((hr) => {
+                  // ⚡ Alterado aqui
                   const selecionado = hr === horarioSelecionado;
                   return (
                     <Pressable
@@ -419,7 +439,6 @@ export default function Favoritos() {
                   );
                 })}
               </View>
-
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xs text-slate-400 uppercase tracking-widest mb-3"
@@ -449,7 +468,6 @@ export default function Favoritos() {
                   );
                 })}
               </View>
-
               <View className="flex-row gap-3">
                 {alertaSelecionadoId !== null && (
                   <Pressable

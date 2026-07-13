@@ -1,39 +1,30 @@
 import { fonts } from "@/app/_layout";
-import { ROTAS_MOCK } from "@/constants/rotasDados";
+import { ROTAS_MOCK, calcularProximoHorario } from "@/constants/rotasDados";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
 interface CarrosselRotasProps {
-  filtro: "rodoviaria" | "destino";
+  // Mantemos o tipo que a função espera
+  filtro: "rodoviaria" | "origem" | "destino";
   historicoIds: string[];
 }
 
 export function CarrosselRotas({ filtro, historicoIds }: CarrosselRotasProps) {
   const router = useRouter();
 
-  // O useMemo aqui garante que sempre que historicoIds mudar,
-  // a lista seja re-ordenada instantaneamente.
   const dadosOrdenados = useMemo(() => {
-    // Criamos uma cópia do array original para não mutar o MOCK
     return [...ROTAS_MOCK].sort((a, b) => {
       const indexA = historicoIds.indexOf(a.id);
       const indexB = historicoIds.indexOf(b.id);
 
-      // Se ambos estão no histórico, mantém a ordem do histórico
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-
-      // Se A está no histórico, ele vem antes (indexA menor que 0 é falso)
       if (indexA !== -1) return -1;
-
-      // Se B está no histórico, ele vem antes
       if (indexB !== -1) return 1;
-
-      // Se nenhum está no histórico, mantém a ordem original
       return 0;
     });
-  }, [historicoIds]); // 👈 DEPENDENCIA CRÍTICA: Se o histórico mudar, o carrossel re-ordena
+  }, [historicoIds]);
 
   const renderCard = ({ item }: { item: (typeof ROTAS_MOCK)[0] }) => (
     <Pressable
@@ -53,7 +44,12 @@ export function CarrosselRotas({ filtro, historicoIds }: CarrosselRotasProps) {
           style={{ fontFamily: fonts.regular }}
           className="text-white/90 text-sm"
         >
-          {item.proximoHorario}
+          {calcularProximoHorario(
+            item.horarios,
+            filtro === "rodoviaria" || filtro === "origem"
+              ? "origem"
+              : "destino",
+          )}
         </Text>
       </View>
     </Pressable>
@@ -68,7 +64,7 @@ export function CarrosselRotas({ filtro, historicoIds }: CarrosselRotasProps) {
         Suas buscas de São Roque - SP
       </Text>
       <FlatList
-        data={dadosOrdenados} // Passamos a lista já ordenada
+        data={dadosOrdenados}
         renderItem={renderCard}
         keyExtractor={(item) => item.id}
         horizontal
