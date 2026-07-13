@@ -1,3 +1,7 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useMemo, useState } from "react";
+import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+
 import AlternadorSentido, { SentidoTipo } from "@/components/AlternadorSentido";
 import FiltroHorarioOpcional, {
   OperacaoItem,
@@ -7,38 +11,82 @@ import HeaderLinhaSelecionada from "@/components/HeaderLinhaSelecionada";
 import { ListaHorariosDaRotaSelecionada } from "@/components/ListaHorariosDaRotaSelecionada";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
 import { Screen } from "@/components/safearea";
-import { ROTAS_MOCK } from "@/constants/rotasDados";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { BlocoHorarios, ROTAS_MOCK } from "@/constants/rotasDados";
 
 export default function TodosHorariosDaRotaSelecionada() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
-  // AJUSTE: Extrai o ID original caso venha com o prefixo "auto_" da busca recente
   const idReal = String(id).startsWith("auto_")
     ? String(id).split("_")[1]
     : String(id);
-
-  // Busca a rota correta usando o ID tratado
   const rota = ROTAS_MOCK.find((r) => String(r.id) === idReal);
 
   const [modalFiltroVisivel, setModalFiltroVisivel] = useState(false);
   const [sentidoAtual, setSentidoAtual] = useState<SentidoTipo>("rodoviaria");
 
-  const [dadosOperacao] = useState<OperacaoItem[]>([
-    { id: "op_1", label: "Seg - Sáb" },
-    { id: "op_2", label: "Dom / Fer" },
-  ]);
+  // Estado para armazenar os horários que estão sendo exibidos (inicia com todos)
+  const [horariosParaExibir, setHorariosParaExibir] = useState<BlocoHorarios[]>(
+    rota?.horarios || [],
+  );
 
-  const [dadosPeriodos] = useState<PeriodoItem[]>([
-    { id: "p_1", label: "06:00 - 09:00" },
-    { id: "p_2", label: "09:00 - 12:00" },
-    { id: "p_3", label: "12:00 - 18:00" },
-    { id: "p_4", label: "18:00 - 22:00" },
-    { id: "p_5", label: "22:00 - 01:00" },
-  ]);
+  // Filtros dinâmicos baseados no JSON
+  const operacoesDisponiveis: OperacaoItem[] = useMemo(() => {
+    const lista = rota
+      ? rota.horarios.map((bloco, index) => ({
+          id: index.toString(),
+          label: bloco.titulo,
+        }))
+      : [];
+    return [{ id: "todos", label: "Todas Operações" }, ...lista];
+  }, [rota]);
+
+  const periodosDisponiveis: PeriodoItem[] = [
+    { id: "todos", label: "Dia Todo" },
+    { id: "matutino", label: "Matutino" },
+    { id: "vespertino", label: "Vespertino" },
+    { id: "noturno", label: "Noturno" },
+  ];
+
+  const handleAplicarFiltro = (operacaoId: string, periodoId: string) => {
+    if (!rota) return;
+
+    const resultado: BlocoHorarios[] = rota.horarios
+      // 1. Filtra os blocos (Operações)
+      .filter((_, index) => {
+        if (operacaoId === "todos") return true;
+        return index.toString() === operacaoId;
+      })
+      // 2. Transforma (Mapeia) para filtrar os itens internos (Períodos)
+      .map((bloco) => {
+        const itensFiltrados = bloco.itens.filter((item) => {
+          if (periodoId === "todos") return true;
+
+          const hora = parseInt(item.hora.split(":")[0]);
+
+          if (periodoId === "matutino") return hora >= 5 && hora < 12;
+          if (periodoId === "vespertino") return hora >= 12 && hora < 18;
+          if (periodoId === "noturno") return hora >= 18 || hora < 5; // Ajustei para 5h, que é um padrão comum
+
+          return true;
+        });
+
+        return {
+          titulo: bloco.titulo,
+          itens: itensFiltrados,
+        };
+      })
+      // 3. Remove blocos que ficaram vazios após o filtro de período
+      .filter((bloco) => bloco.itens.length > 0);
+
+    setHorariosParaExibir(resultado);
+    setModalFiltroVisivel(false);
+  };
+  const handleMudarAba = (aba: TabOpcoes) => {
+    if (aba === "home") router.push("/(public)/inicial");
+    else if (aba === "favoritas") router.push("/(public)/favoritos");
+    else if (aba === "perfil") router.push("/(public)/perfil");
+  };
 
   if (!rota) {
     return (
@@ -50,16 +98,6 @@ export default function TodosHorariosDaRotaSelecionada() {
     );
   }
 
-  const handleAplicarFiltro = (operacaoId: string, periodoId: string) => {
-    console.log("Aplicando filtros:", { operacaoId, periodoId });
-  };
-
-  const handleMudarAba = (aba: TabOpcoes) => {
-    if (aba === "home") router.push("/(public)/inicial");
-    else if (aba === "favoritas") router.push("/(public)/favoritos");
-    else if (aba === "perfil") router.push("/(public)/perfil");
-  };
-
   return (
     <Screen>
       <View className="px-6 pb-4">
@@ -68,7 +106,6 @@ export default function TodosHorariosDaRotaSelecionada() {
           nomeDestino={rota.destino}
           onPressFiltro={() => setModalFiltroVisivel(true)}
         />
-
         <View className="mt-2 mb-2">
           <AlternadorSentido
             labelDestino={rota.destino}
@@ -82,7 +119,7 @@ export default function TodosHorariosDaRotaSelecionada() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <ListaHorariosDaRotaSelecionada dados={rota.horarios} />
+        <ListaHorariosDaRotaSelecionada dados={horariosParaExibir} />
       </ScrollView>
 
       <Modal
@@ -101,8 +138,8 @@ export default function TodosHorariosDaRotaSelecionada() {
             onStartShouldSetResponder={() => true}
           >
             <FiltroHorarioOpcional
-              operacoesDisponiveis={dadosOperacao}
-              periodosDisponiveis={dadosPeriodos}
+              operacoesDisponiveis={operacoesDisponiveis}
+              periodosDisponiveis={periodosDisponiveis}
               onSelecionarFiltros={handleAplicarFiltro}
             />
           </View>
