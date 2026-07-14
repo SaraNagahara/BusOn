@@ -55,7 +55,11 @@ export const ROTAS_MOCK: RotaProps[] = [
       {
         titulo: "Segunda a Sábado",
         itens: [
-          { hora: "06:15", detalhe: "Direto", direcao: "origem" },
+          {
+            hora: "06:15",
+            detalhe: "Direto",
+            direcao: "origem",
+          },
           {
             hora: "08:30",
             detalhe: "Via Paisagem Colonial",

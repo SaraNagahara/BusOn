@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import AlternadorSentido, { SentidoTipo } from "@/components/AlternadorSentido";
@@ -20,24 +20,37 @@ export default function TodosHorariosDaRotaSelecionada() {
   const idReal = String(id).startsWith("auto_")
     ? String(id).split("_")[1]
     : String(id);
-  const rota = ROTAS_MOCK.find((r) => String(r.id) === idReal);
-
-  const [modalFiltroVisivel, setModalFiltroVisivel] = useState(false);
-  const [sentidoAtual, setSentidoAtual] = useState<SentidoTipo>("rodoviaria");
-
-  // Estado para armazenar os horários que estão sendo exibidos (inicia com todos)
-  const [horariosParaExibir, setHorariosParaExibir] = useState<BlocoHorarios[]>(
-    rota?.horarios || [],
+  const rota = useMemo(
+    () => ROTAS_MOCK.find((r) => String(r.id) === idReal),
+    [idReal],
   );
 
-  // Filtros dinâmicos baseados no JSON
+  const [modalFiltroVisivel, setModalFiltroVisivel] = useState(false);
+  const [sentidoAtual, setSentidoAtual] = useState<SentidoTipo>("origem"); // Ajustado para "origem" conforme seu tipo
+  const [horariosParaExibir, setHorariosParaExibir] = useState<BlocoHorarios[]>(
+    [],
+  );
+
+  // Filtra os itens de cada bloco conforme o sentido selecionado
+  useEffect(() => {
+    if (!rota) return;
+
+    const horariosFiltrados = rota.horarios
+      .map((bloco) => ({
+        ...bloco,
+        itens: bloco.itens.filter((item) => item.direcao === sentidoAtual),
+      }))
+      .filter((bloco) => bloco.itens.length > 0);
+
+    setHorariosParaExibir(horariosFiltrados);
+  }, [sentidoAtual, rota]);
+
   const operacoesDisponiveis: OperacaoItem[] = useMemo(() => {
-    const lista = rota
-      ? rota.horarios.map((bloco, index) => ({
-          id: index.toString(),
-          label: bloco.titulo,
-        }))
-      : [];
+    if (!rota) return [];
+    const lista = rota.horarios.map((bloco, index) => ({
+      id: index.toString(),
+      label: bloco.titulo,
+    }));
     return [{ id: "todos", label: "Todas Operações" }, ...lista];
   }, [rota]);
 
@@ -51,37 +64,38 @@ export default function TodosHorariosDaRotaSelecionada() {
   const handleAplicarFiltro = (operacaoId: string, periodoId: string) => {
     if (!rota) return;
 
-    const resultado: BlocoHorarios[] = rota.horarios
-      // 1. Filtra os blocos (Operações)
-      .filter((_, index) => {
-        if (operacaoId === "todos") return true;
-        return index.toString() === operacaoId;
-      })
-      // 2. Transforma (Mapeia) para filtrar os itens internos (Períodos)
-      .map((bloco) => {
-        const itensFiltrados = bloco.itens.filter((item) => {
-          if (periodoId === "todos") return true;
+    const resultado = rota.horarios
+      .filter(
+        (_, index) => operacaoId === "todos" || index.toString() === operacaoId,
+      )
+      .map((bloco) => ({
+        ...bloco,
+        // Filtra por sentido E por período simultaneamente
+        itens: bloco.itens.filter((item) => {
+          const filtroSentido = item.direcao === sentidoAtual;
+
+          if (periodoId === "todos") return filtroSentido;
 
           const hora = parseInt(item.hora.split(":")[0]);
+          let filtroPeriodo = true;
+          if (periodoId === "matutino") filtroPeriodo = hora >= 5 && hora < 12;
+          else if (periodoId === "vespertino")
+            filtroPeriodo = hora >= 12 && hora < 18;
+          else if (periodoId === "noturno")
+            filtroPeriodo = hora >= 18 || hora < 5;
 
-          if (periodoId === "matutino") return hora >= 5 && hora < 12;
-          if (periodoId === "vespertino") return hora >= 12 && hora < 18;
-          if (periodoId === "noturno") return hora >= 18 || hora < 5; // Ajustei para 5h, que é um padrão comum
-
-          return true;
-        });
-
-        return {
-          titulo: bloco.titulo,
-          itens: itensFiltrados,
-        };
-      })
-      // 3. Remove blocos que ficaram vazios após o filtro de período
+          return filtroSentido && filtroPeriodo;
+        }),
+      }))
       .filter((bloco) => bloco.itens.length > 0);
 
     setHorariosParaExibir(resultado);
     setModalFiltroVisivel(false);
   };
+
+  // ... restante do código (handleMudarAba, render, etc)
+  // Certifique-se apenas que o AlternadorSentido envie os valores "origem" ou "destino"
+  // para coincidir com o seu tipo no rotasDados.ts
   const handleMudarAba = (aba: TabOpcoes) => {
     if (aba === "home") router.push("/(public)/inicial");
     else if (aba === "favoritas") router.push("/(public)/favoritos");
