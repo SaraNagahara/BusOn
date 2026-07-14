@@ -167,11 +167,18 @@ export default function Favoritos() {
         const alertaExistente = meusAlertas.find(
           (a) => a.idAlerta === idAlerta,
         );
+
+        // Adicionado aqui: setar a direção que estava salva
+        setDirecaoAlerta(
+          (alertaExistente?.direcao as "origem" | "destino") || "origem",
+        );
         setHorarioSelecionado(alertaExistente?.horario || null);
         setDiasSelecionados(
           alertaExistente?.dias || ["seg", "ter", "qua", "qui", "sex"],
         );
       } else {
+        // Valores padrão para um novo alerta
+        setDirecaoAlerta("origem");
         setHorarioSelecionado(null);
         setDiasSelecionados(["seg", "ter", "qua", "qui", "sex"]);
       }
@@ -209,10 +216,11 @@ export default function Favoritos() {
     }
 
     const sucesso = configurarAlerta(
-      rotaSelecionadaId,
-      horarioSelecionado,
-      diasSelecionados,
-      alertaSelecionadoId,
+      rotaSelecionadaId, // 1. idRota
+      horarioSelecionado || "", // 2. horario (garantindo string)
+      diasSelecionados, // 3. dias
+      direcaoAlerta || "origem", // 4. direcao (o novo parâmetro obrigatório)
+      alertaSelecionadoId, // 5. idAlertaExistente
     );
     if (sucesso) {
       setModalVisible(false);

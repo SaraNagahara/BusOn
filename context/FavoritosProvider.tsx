@@ -1,5 +1,8 @@
 import { ROTAS_MOCK } from "@/constants/rotasDados";
+import { useAuth } from "@/context/AuthProvider";
+import { useRouter } from "expo-router";
 import React, { createContext, useContext, useState } from "react";
+import { Alert } from "react-native";
 
 interface RotaFavoritaDinamicaProps {
   id: string;
@@ -14,6 +17,7 @@ interface AlertaProps {
   idRota: string;
   horario: string;
   dias: string[];
+  direcao: "origem" | "destino";
 }
 
 interface FavoritosContextType {
@@ -26,6 +30,7 @@ interface FavoritosContextType {
     idRota: string,
     horario: string,
     dias: string[],
+    direcao: "origem" | "destino",
     idAlertaExistente?: string | null,
   ) => boolean;
   removerAlertaPorId: (idAlerta: string) => void;
@@ -42,8 +47,27 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
   const [meusAlertas, setMeusAlertas] = useState<AlertaProps[]>([]); // 👈 Estado dos alertas separado
 
   const listaFavoritosIds = meusFavoritos.map((f) => f.id);
+  const { usuarioLogado } = useAuth();
+  const router = useRouter();
 
   const alternarFavorito = (id: string, destino: string) => {
+    if (usuarioLogado === false) {
+      Alert.alert(
+        "Não foi possível favoritar",
+        "Você precisa estar logado para favoritar esta rota.",
+        [
+          {
+            text: "Voltar", // Botão da esquerda
+            style: "cancel",
+          },
+          {
+            text: "Fazer Login", // Botão da direita
+            onPress: () => router.push("/loginCadastro"), // Redireciona para sua tela
+          },
+        ],
+      );
+      return; // Para a execução, nada acontece na lista de favoritos
+    }
     if (listaFavoritosIds.includes(id)) {
       setMeusFavoritos((prev) => prev.filter((item) => item.id !== id));
       // Se remover dos favoritos, limpa os alertas atrelados a essa rota por segurança
@@ -58,7 +82,7 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
       const novoFavorito: RotaFavoritaDinamicaProps = {
         id: id,
         destino: destino,
-        horarioRodoviaria: rotaNoMock?.proximoHorario || "18:20",
+        horarioRodoviaria: "18:20",
         horarioDestino: "09:45",
       };
       setMeusFavoritos((prev) => [...prev, novoFavorito]);
@@ -70,33 +94,32 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
     idRota: string,
     horario: string,
     dias: string[],
+    direcao: "origem" | "destino", // Receba o parâmetro
     idAlertaExistente?: string | null,
   ): boolean => {
-    // Filtra os outros alertas (menos o que está sendo editado) para validar a trava de 2
     const outrosAlertas = meusAlertas.filter(
       (alerta) => alerta.idAlerta !== idAlertaExistente,
     );
 
     if (outrosAlertas.length >= 2) {
-      alert(
-        "Limite atingido! Você só pode definir até 2 notificações no aplicativo.",
-      );
+      alert("Limite atingido!");
       return false;
     }
 
     if (idAlertaExistente) {
-      // Editando um alerta que já existia
+      // 👈 CORREÇÃO: Atualize também o campo direcao aqui
       setMeusAlertas((prev) =>
         prev.map((alerta) =>
           alerta.idAlerta === idAlertaExistente
-            ? { ...alerta, horario, dias }
+            ? { ...alerta, horario, dias, direcao }
             : alerta,
         ),
       );
     } else {
-      // Criando um alerta totalmente novo (mesmo que seja para um ID de rota repetido!)
+      // 👈 CORREÇÃO: Salve a direção vinda do parâmetro, não fixo como "origem"
       const novoAlerta: AlertaProps = {
-        idAlerta: `${idRota}-${Date.now()}`, // Identificador único composto
+        direcao,
+        idAlerta: `${idRota}-${Date.now()}`,
         idRota,
         horario,
         dias,
@@ -106,7 +129,6 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
 
     return true;
   };
-
   // 🔕 Remove um alerta específico usando o ID dele
   const removerAlertaPorId = (idAlerta: string) => {
     setMeusAlertas((prev) =>
