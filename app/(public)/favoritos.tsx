@@ -45,6 +45,10 @@ export default function Favoritos() {
     null,
   );
 
+  const [direcaoAlerta, setDirecaoAlerta] = useState<"origem" | "destino">(
+    "origem",
+  );
+
   const {
     listaFavoritosIds,
     meusAlertas,
@@ -227,11 +231,13 @@ export default function Favoritos() {
     const rota = ROTAS_MOCK.find((r) => String(r.id) === rotaSelecionadaId);
     if (!rota) return [];
 
-    // Pega todos os horários de todos os blocos da rota
+    // Filtra os horários baseados na direção escolhida pelo usuário
     return rota.horarios.flatMap((bloco) =>
-      bloco.itens.map((item) => item.hora),
+      bloco.itens
+        .filter((item) => item.direcao === direcaoAlerta) // Filtro pela direção
+        .map((item) => item.hora),
     );
-  }, [rotaSelecionadaId]);
+  }, [rotaSelecionadaId, direcaoAlerta]); // Adicionado direcaoAlerta como dependência
 
   const DIAS_SEMANA_MOCK = [
     { label: "S", id: "seg" },
@@ -272,6 +278,10 @@ export default function Favoritos() {
 
     router.push(`/horarios/${id}`);
   }, []);
+
+  const rotaAtual = useMemo(() => {
+    return ROTAS_MOCK.find((r) => String(r.id) === rotaSelecionadaId);
+  }, [rotaSelecionadaId]);
 
   return (
     <View className="flex-1 bg-white">
@@ -403,14 +413,72 @@ export default function Favoritos() {
                   <Ionicons name="close" size={20} color="#64748B" />
                 </Pressable>
               </View>
+              {/* Seletor de Direção */}
+              {rotaAtual && (
+                <>
+                  <Text
+                    style={{ fontFamily: fonts.bold }}
+                    className="text-xs text-slate-400 uppercase tracking-widest mb-3"
+                  >
+                    Saindo de:
+                  </Text>
+
+                  <View className="flex-row gap-2 mb-6">
+                    <Pressable
+                      onPress={() => {
+                        setDirecaoAlerta("origem");
+                        setHorarioSelecionado(null);
+                      }}
+                      className={`flex-1 py-3 rounded-xl border items-center justify-center ${
+                        direcaoAlerta === "origem"
+                          ? "bg-[#3F5CC4] border-[#3F5CC4]"
+                          : "bg-slate-50 border-slate-200"
+                      }`}
+                    >
+                      <Text
+                        style={{ fontFamily: fonts.bold }}
+                        className={
+                          direcaoAlerta === "origem"
+                            ? "text-white"
+                            : "text-slate-600"
+                        }
+                      >
+                        Rodoviária
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => {
+                        setDirecaoAlerta("destino");
+                        setHorarioSelecionado(null);
+                      }}
+                      className={`flex-1 py-3 rounded-xl border items-center justify-center ${
+                        direcaoAlerta === "destino"
+                          ? "bg-[#3F5CC4] border-[#3F5CC4]"
+                          : "bg-slate-50 border-slate-200"
+                      }`}
+                    >
+                      <Text
+                        style={{ fontFamily: fonts.bold }}
+                        className={
+                          direcaoAlerta === "destino"
+                            ? "text-white"
+                            : "text-slate-600"
+                        }
+                      >
+                        {rotaAtual.destino}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              )}
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xs text-slate-400 uppercase tracking-widest mb-3"
               >
                 Horário de partida
               </Text>
-              // Dentro do seu Modal, procure pela parte dos "Horário de
-              partida":
+
               <View className="flex-row flex-wrap gap-2 mb-6">
                 {horariosDisponiveis.map((hr) => {
                   // ⚡ Alterado aqui

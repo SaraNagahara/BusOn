@@ -114,7 +114,6 @@ export default function LoginCadastro() {
           registerEmail,
           registerPassword,
           registerConfirmPassword,
-          registerPhone,
         }),
       },
     );
@@ -361,23 +360,6 @@ export default function LoginCadastro() {
                               color="#9CA3AF"
                             />
                           </TouchableOpacity>
-                        </View>
-                      </View>
-
-                      {/* TELEFONE */}
-                      <View className="mb-4">
-                        <Text className="text-black text-base mb-1 font-medium">
-                          Telefone
-                        </Text>
-                        <View className="border border-gray-200 rounded-2xl px-4 py-3 bg-white">
-                          <TextInput
-                            placeholder="Digite seu DDD + Telefone"
-                            placeholderTextColor="#9CA3AF"
-                            className="text-base text-black flex-1"
-                            keyboardType="phone-pad"
-                            value={registerPhone}
-                            onChangeText={setRegisterPhone}
-                          />
                         </View>
                       </View>
 
