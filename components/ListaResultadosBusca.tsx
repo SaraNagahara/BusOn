@@ -6,6 +6,14 @@ import { FlatList, Pressable, Text, View } from "react-native";
 import { useFavoritos } from "../context/FavoritosProvider";
 import { TipoLinhaOpcoes } from "./FiltroBusca";
 
+// 🌟 1. FUNÇÃO DE NORMALIZAÇÃO INTEGRADA (Garante que Ç vire C, Ã vire A, etc.)
+const normalizarTexto = (texto: string): string => {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
 export interface RotaResultadoProps {
   id: string;
   destino: string;
@@ -48,12 +56,16 @@ export function ListaResultadosBusca({
 
       const atendeCategoria =
         filtroCategoria === "todas" || rota.tipo === filtroCategoria;
-      const termo = textoBusca.toLowerCase();
-      const destino = rota.destino.toLowerCase();
+
+      // 🌟 2. NORMALIZAÇÃO DA BUSCA E DO BANCO DE DADOS
+      const termoNormalizado = normalizarTexto(textoBusca);
+      const destinoNormalizado = normalizarTexto(rota.destino);
 
       const atendeBusca =
-        destino.includes(termo) ||
-        (destino.startsWith("s. joão") && termo.startsWith("sao joao"));
+        destinoNormalizado.includes(termoNormalizado) ||
+        // Mantém a compatibilidade histórica se escrever "sao joao" vs "s. joão"
+        (destinoNormalizado.startsWith("s. joao") &&
+          termoNormalizado.startsWith("sao joao"));
 
       return atendeCategoria && atendeBusca;
     }).map((rota): RotaResultadoProps => {
@@ -113,7 +125,6 @@ export function ListaResultadosBusca({
             >
               Próximo às {item.proximoHorario}
               {" - "}
-              {/* Estilo mais sóbrio, sem sublinhado, usando a cor do título */}
               <Text
                 style={{ fontFamily: fonts.medium }}
                 className="text-[#2449AE]/70 text-xs ml-2 uppercase tracking-wide"
