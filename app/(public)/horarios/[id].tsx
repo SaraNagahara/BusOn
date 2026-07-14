@@ -1,6 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import AlternadorSentido, { SentidoTipo } from "@/components/AlternadorSentido";
 import FiltroHorarioOpcional, {
@@ -12,24 +19,53 @@ import { ListaHorariosDaRotaSelecionada } from "@/components/ListaHorariosDaRota
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
 import { Screen } from "@/components/safearea";
 import { BlocoHorarios, ROTAS_MOCK } from "@/constants/rotasDados";
+import { useFavoritos } from "@/context/FavoritosProvider";
 
 export default function TodosHorariosDaRotaSelecionada() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
 
+  // Contexto de Favoritos
+  const { listaFavoritosIds, alternarFavorito } = useFavoritos();
+
   const idReal = String(id).startsWith("auto_")
     ? String(id).split("_")[1]
     : String(id);
+
   const rota = useMemo(
     () => ROTAS_MOCK.find((r) => String(r.id) === idReal),
     [idReal],
   );
 
+  // Verifica se a rota atual já está favoritada
+  const isFavorito = useMemo(
+    () => listaFavoritosIds.includes(idReal),
+    [listaFavoritosIds, idReal],
+  );
+
   const [modalFiltroVisivel, setModalFiltroVisivel] = useState(false);
-  const [sentidoAtual, setSentidoAtual] = useState<SentidoTipo>("origem"); // Ajustado para "origem" conforme seu tipo
+  const [sentidoAtual, setSentidoAtual] = useState<SentidoTipo>("origem");
   const [horariosParaExibir, setHorariosParaExibir] = useState<BlocoHorarios[]>(
     [],
   );
+
+  // Função para alternar o estado de favorito
+  const handleAlternarFavorito = () => {
+    if (!rota) return;
+
+    Alert.alert(
+      isFavorito ? "Remover dos Favoritos" : "Adicionar aos Favoritos",
+      `Deseja ${isFavorito ? "remover" : "adicionar"} a linha ${rota.destino}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Confirmar",
+          style: isFavorito ? "destructive" : "default",
+          onPress: () => alternarFavorito(idReal, rota.destino),
+        },
+      ],
+    );
+  };
 
   // Filtra os itens de cada bloco conforme o sentido selecionado
   useEffect(() => {
@@ -70,7 +106,6 @@ export default function TodosHorariosDaRotaSelecionada() {
       )
       .map((bloco) => ({
         ...bloco,
-        // Filtra por sentido E por período simultaneamente
         itens: bloco.itens.filter((item) => {
           const filtroSentido = item.direcao === sentidoAtual;
 
@@ -93,9 +128,6 @@ export default function TodosHorariosDaRotaSelecionada() {
     setModalFiltroVisivel(false);
   };
 
-  // ... restante do código (handleMudarAba, render, etc)
-  // Certifique-se apenas que o AlternadorSentido envie os valores "origem" ou "destino"
-  // para coincidir com o seu tipo no rotasDados.ts
   const handleMudarAba = (aba: TabOpcoes) => {
     if (aba === "home") router.push("/(public)/inicial");
     else if (aba === "favoritas") router.push("/(public)/favoritos");
@@ -119,6 +151,8 @@ export default function TodosHorariosDaRotaSelecionada() {
           numeroLinha={rota.numeroLinha}
           nomeDestino={rota.destino}
           onPressFiltro={() => setModalFiltroVisivel(true)}
+          isFavorito={isFavorito}
+          onPressFavorito={handleAlternarFavorito}
         />
         <View className="mt-2 mb-2">
           <AlternadorSentido
