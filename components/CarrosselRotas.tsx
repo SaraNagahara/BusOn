@@ -9,22 +9,37 @@ interface CarrosselRotasProps {
   // Mantemos o tipo que a função espera
   filtro: "rodoviaria" | "origem" | "destino";
   historicoIds: string[];
+  rotaEmDestaqueId?: string | null;
 }
 
-export function CarrosselRotas({ filtro, historicoIds }: CarrosselRotasProps) {
+export function CarrosselRotas({
+  filtro,
+  historicoIds,
+  rotaEmDestaqueId,
+}: CarrosselRotasProps) {
   const router = useRouter();
 
   const dadosOrdenados = useMemo(() => {
-    return [...ROTAS_MOCK].sort((a, b) => {
+    let base = [...ROTAS_MOCK];
+
+    // Se houver uma rota em destaque, ela ganha prioridade absoluta
+    if (rotaEmDestaqueId) {
+      const destaque = base.find((r) => r.id === rotaEmDestaqueId);
+      if (destaque) {
+        return [destaque, ...base.filter((r) => r.id !== rotaEmDestaqueId)];
+      }
+    }
+
+    // Lógica original de ordenação por histórico
+    return base.sort((a, b) => {
       const indexA = historicoIds.indexOf(a.id);
       const indexB = historicoIds.indexOf(b.id);
-
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
       if (indexA !== -1) return -1;
       if (indexB !== -1) return 1;
       return 0;
     });
-  }, [historicoIds]);
+  }, [historicoIds, rotaEmDestaqueId]);
 
   const renderCard = ({ item }: { item: (typeof ROTAS_MOCK)[0] }) => (
     <Pressable

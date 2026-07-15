@@ -28,6 +28,12 @@ export default function Inicial() {
   const [filtroBuscaAtivo, setFiltroBuscaAtivo] =
     useState<TipoLinhaOpcoes>("todas");
   const [estaBuscando, setEstaBuscando] = useState(false);
+  const [rotaEmDestaque, setRotaEmDestaque] = useState<string | null>(null);
+  const normalizar = (t: string) =>
+    t
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
   const [historicoIds, setHistoricoIds] = useState<string[]>([
     "1",
@@ -35,6 +41,22 @@ export default function Inicial() {
     "3",
     "4",
   ]);
+
+  useEffect(() => {
+    if (busca.length > 0) {
+      const resultados = ROTAS_MOCK.filter((r) =>
+        normalizar(r.destino).includes(normalizar(busca)),
+      );
+
+      if (resultados.length === 1) {
+        setRotaEmDestaque(resultados[0].id);
+      } else {
+        setRotaEmDestaque(null);
+      }
+    } else {
+      setRotaEmDestaque(null);
+    }
+  }, [busca]);
 
   const {
     meusFavoritos,
@@ -51,27 +73,53 @@ export default function Inicial() {
       .filter((r): r is NonNullable<typeof r> => !!r);
   }, [meusFavoritos]);
 
+  const finalizarBusca = useCallback(() => {
+    // 1. Promove a rota para o histórico se for um resultado único
+    if (rotaEmDestaque) {
+      setHistoricoIds((prev) => [
+        rotaEmDestaque,
+        ...prev.filter((i) => i !== rotaEmDestaque),
+      ]);
+    }
+
+    // 2. Limpa os estados de busca
+    searchBarRef.current?.blur();
+    setBusca("");
+    setEstaBuscando(false);
+    setFiltroBuscaAtivo("todas");
+    setRotaEmDestaque(null);
+  }, [rotaEmDestaque]);
+
   const handleNavegacaoFooter = useCallback(
     (aba: TabOpcoes) => {
       if (aba === "home") {
-        if (estaBuscando) handleSairDaBusca();
+        if (estaBuscando) finalizarBusca(); // Usa a nova função
         return;
       }
+
+      // Se o usuário mudar de aba (ex: para favoritas) enquanto buscava,
+      // também finalizamos e salvamos a rota no histórico
+      if (estaBuscando) finalizarBusca();
+
       if (aba === "favoritas") router.push("/favoritos");
       if (aba === "perfil") router.push("/perfil");
     },
-    [estaBuscando],
+    [estaBuscando, finalizarBusca], // Adicionado finalizarBusca como dependência
   );
 
   useEffect(() => {
     if (!usuarioLogado) limparFavoritos();
   }, [usuarioLogado]);
 
-  const handleSelecionarRota = useCallback((id: string) => {
-    setHistoricoIds((prev) => [id, ...prev.filter((i) => i !== id)]);
-    handleSairDaBusca();
-    router.push(`/horarios/${id}`);
-  }, []);
+  const handleSelecionarRota = useCallback(
+    (id: string) => {
+      // Aqui você já adiciona ao histórico, mas pode usar o finalizarBusca também
+      setHistoricoIds((prev) => [id, ...prev.filter((i) => i !== id)]);
+      finalizarBusca();
+      router.push(`/horarios/${id}`);
+    },
+    [finalizarBusca],
+  );
 
   const handleAlternarFavoritoClick = useCallback(
     (id: string, destino: string) => {
@@ -96,11 +144,24 @@ export default function Inicial() {
   }, [usuarioLogado]);
 
   const handleSairDaBusca = useCallback(() => {
+    // SE houver uma rota destacada, salvamos ela no histórico antes de sair
+    if (rotaEmDestaque) {
+      setHistoricoIds((prev) => {
+        // Remove caso já exista e coloca no topo
+        const novoHistorico = [
+          rotaEmDestaque,
+          ...prev.filter((i) => i !== rotaEmDestaque),
+        ];
+        return novoHistorico.slice(0, 5); // Mantém apenas os 5 mais recentes
+      });
+    }
+
     searchBarRef.current?.blur();
     setBusca("");
     setEstaBuscando(false);
     setFiltroBuscaAtivo("todas");
-  }, []);
+    setRotaEmDestaque(null); // Limpa o destaque
+  }, [rotaEmDestaque]);
 
   return (
     <View className="flex-1 bg-white">
@@ -115,7 +176,7 @@ export default function Inicial() {
               setBusca(txt);
               if (txt.length === 0) setEstaBuscando(true);
             }}
-            aoLimpar={() => handleSairDaBusca()}
+            aoLimpar={() => finalizarBusca()}
           />
 
           {estaBuscando ? (
@@ -146,6 +207,7 @@ export default function Inicial() {
                   filtroSelecionado === "rodoviaria" ? "origem" : "destino"
                 }
                 historicoIds={historicoIds}
+                rotaEmDestaqueId={rotaEmDestaque}
               />
 
               <RotasFavoritas
