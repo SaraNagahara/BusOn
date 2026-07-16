@@ -57,9 +57,9 @@ export default function TodosHorariosDaRotaSelecionada() {
       isFavorito ? "Remover dos Favoritos" : "Adicionar aos Favoritos",
       `Deseja ${isFavorito ? "remover" : "adicionar"} a linha ${rota.destino}?`,
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: "Não", style: "cancel" },
         {
-          text: "Confirmar",
+          text: "Sim, confirmar",
           style: isFavorito ? "destructive" : "default",
           onPress: () => alternarFavorito(idReal, rota.destino),
         },

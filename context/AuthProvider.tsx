@@ -9,7 +9,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [usuarioLogado, setUsuarioLogado] = useState(false); // 🔐 Único ponto de verdade do login
+  const [usuarioLogado, setUsuarioLogado] = useState(true); // 🔐 Único ponto de verdade do login
 
   return (
     <AuthContext.Provider value={{ usuarioLogado, setUsuarioLogado }}>

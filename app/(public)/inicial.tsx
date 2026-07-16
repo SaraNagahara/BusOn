@@ -123,16 +123,26 @@ export default function Inicial() {
 
   const handleAlternarFavoritoClick = useCallback(
     (id: string, destino: string) => {
-      Alert.alert(
-        "Favoritos",
-        `Deseja alternar o status da linha ${destino}?`,
-        [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Confirmar", onPress: () => alternarFavorito(id, destino) },
-        ],
-      );
+      // 🔍 Verifica se a rota já está nos favoritos
+      const jaEhFavorito = listaFavoritosIds.includes(id);
+
+      // 📝 Define o título e a mensagem com base no estado atual
+      const titulo = jaEhFavorito
+        ? "Remover dos Favoritos"
+        : "Adicionar aos Favoritos";
+      const mensagem = jaEhFavorito
+        ? `Deseja remover a linha ${destino} dos seus favoritos?`
+        : `Deseja adicionar a linha ${destino} aos seus favoritos?`;
+
+      Alert.alert(titulo, mensagem, [
+        { text: "Não", style: "cancel" },
+        {
+          text: "Sim, confirmar",
+          onPress: () => alternarFavorito(id, destino),
+        },
+      ]);
     },
-    [alternarFavorito],
+    [alternarFavorito, listaFavoritosIds], // ⚡ Adicionado listaFavoritosIds aqui para atualizar o comportamento sempre que a lista mudar
   );
 
   const handleAdicionarFavorita = useCallback(() => {

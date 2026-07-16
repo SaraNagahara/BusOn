@@ -74,7 +74,7 @@ export default function Favoritos() {
           "Remover dos Favoritos",
           `Tem certeza que deseja desfavoritar a linha ${destino}?`,
           [
-            { text: "Cancelar", style: "cancel" },
+            { text: "Não", style: "cancel" },
             {
               text: "Sim, remover",
               style: "destructive",
@@ -85,9 +85,9 @@ export default function Favoritos() {
       } else {
         Alert.alert(
           "Adicionar aos Favoritos",
-          `Deseja favoritar a linha ${destino}?`,
+          `Deseja adicionar a linha ${destino} aos seus favoritos?`,
           [
-            { text: "Cancelar", style: "cancel" },
+            { text: "Não", style: "cancel" },
             {
               text: "Sim, favoritar",
               style: "default",
@@ -116,9 +116,9 @@ export default function Favoritos() {
         "Remover Notificações",
         `Deseja desativar todas as notificações da linha ${destino} para liberar espaço?`,
         [
-          { text: "Cancelar", style: "cancel" },
+          { text: "Não", style: "cancel" },
           {
-            text: "Remover Notificações",
+            text: "Sim, remover todas",
             style: "destructive",
             onPress: () => {
               const alertasParaRemover = meusAlertas.filter(
@@ -484,7 +484,7 @@ export default function Favoritos() {
                 style={{ fontFamily: fonts.bold }}
                 className="text-xs text-slate-400 uppercase tracking-widest mb-3"
               >
-                Horário de partida
+                Próximas partidas:
               </Text>
 
               <View className="flex-row flex-wrap gap-2 mb-6">
