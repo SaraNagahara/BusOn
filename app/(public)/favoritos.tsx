@@ -11,7 +11,7 @@ import { useAuth } from "@/context/AuthProvider";
 import { useFavoritos } from "@/context/FavoritosProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"; // ⚡ Importado useCallback
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Modal,
@@ -37,16 +37,18 @@ export default function Favoritos() {
     null,
   );
   const [rotaSelecionadaNome, setRotaSelecionadaNome] = useState("");
-  const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(
-    null,
-  );
+
+  // 🌟 DUPLICADOS OS ESTADOS DE SELEÇÃO DE HORÁRIOS (Permite selecionar ambos)
+  const [horarioOrigemSelecionado, setHorarioOrigemSelecionado] = useState<
+    string | null
+  >(null);
+  const [horarioDestinoSelecionado, setHorarioDestinoSelecionado] = useState<
+    string | null
+  >(null);
+
   const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
   const [alertaSelecionadoId, setAlertaSelecionadoId] = useState<string | null>(
     null,
-  );
-
-  const [direcaoAlerta, setDirecaoAlerta] = useState<"origem" | "destino">(
-    "origem",
   );
 
   const {
@@ -64,7 +66,6 @@ export default function Favoritos() {
     }
   }, [usuarioLogado]);
 
-  // ⚡ OTIMIZAÇÃO 1: Evita recriação ao favoritar/desfavoritar
   const handleAlternarFavorito = useCallback(
     (id: string, destino: string) => {
       const jaEFavorito = listaFavoritosIds.includes(id);
@@ -100,7 +101,6 @@ export default function Favoritos() {
     [listaFavoritosIds, alternarFavorito],
   );
 
-  // ⚡ OTIMIZAÇÃO 2: Memorizada função de navegação do Footer
   const handleNavegacaoFooter = useCallback(
     (aba: TabOpcoes) => {
       if (aba === "home") router.push("/inicial");
@@ -109,7 +109,6 @@ export default function Favoritos() {
     [router],
   );
 
-  // ⚡ OTIMIZAÇÃO 3: Isolando a lógica de remoção em lote para o useCallback
   const exibirAlertaRemocao = useCallback(
     (idRota: string, destino: string) => {
       Alert.alert(
@@ -135,7 +134,6 @@ export default function Favoritos() {
     [meusAlertas, removerAlertaPorId],
   );
 
-  // ⚡ OTIMIZAÇÃO 4: Abertura do modal ultraveloz travando renderizações inúteis
   const handleAbrirConfigurarAlerta = useCallback(
     (idRota: string, destino: string, idAlerta: string | null) => {
       if (idAlerta === "REMOVER_TODOS") {
@@ -144,6 +142,8 @@ export default function Favoritos() {
       }
 
       const LIMITE_MAXIMO_ALERTAS = 2;
+
+      // Se for um novo alerta e já tiver estourado o limite do app, barramos
       if (idAlerta === null && meusAlertas.length >= LIMITE_MAXIMO_ALERTAS) {
         const temAlertaNessaRota = meusAlertas.some((a) => a.idRota === idRota);
 
@@ -168,18 +168,22 @@ export default function Favoritos() {
           (a) => a.idAlerta === idAlerta,
         );
 
-        // Adicionado aqui: setar a direção que estava salva
-        setDirecaoAlerta(
-          (alertaExistente?.direcao as "origem" | "destino") || "origem",
-        );
-        setHorarioSelecionado(alertaExistente?.horario || null);
+        // Se estiver editando um alerta específico, identificamos de qual direção ele é
+        if (alertaExistente?.direcao === "origem") {
+          setHorarioOrigemSelecionado(alertaExistente.horario || null);
+          setHorarioDestinoSelecionado(null);
+        } else {
+          setHorarioDestinoSelecionado(alertaExistente?.horario || null);
+          setHorarioOrigemSelecionado(null);
+        }
+
         setDiasSelecionados(
           alertaExistente?.dias || ["seg", "ter", "qua", "qui", "sex"],
         );
       } else {
-        // Valores padrão para um novo alerta
-        setDirecaoAlerta("origem");
-        setHorarioSelecionado(null);
+        // Reset para novas criações permitindo selecionar ambos
+        setHorarioOrigemSelecionado(null);
+        setHorarioDestinoSelecionado(null);
         setDiasSelecionados(["seg", "ter", "qua", "qui", "sex"]);
       }
 
@@ -196,13 +200,14 @@ export default function Favoritos() {
     }
   };
 
+  // 🌟 REGRA DE SALVAMENTO INTELIGENTE (Salva um ou ambos os horários respeitando limites)
   const handleSalvarAlerta = () => {
     if (!rotaSelecionadaId) return;
 
-    if (!horarioSelecionado) {
+    if (!horarioOrigemSelecionado && !horarioDestinoSelecionado) {
       Alert.alert(
         "Horário Obrigatório",
-        "Por favor, selecione um horário de partida para a notificação.",
+        "Por favor, selecione ao menos um horário de partida para a notificação.",
       );
       return;
     }
@@ -215,14 +220,55 @@ export default function Favoritos() {
       return;
     }
 
-    const sucesso = configurarAlerta(
-      rotaSelecionadaId, // 1. idRota
-      horarioSelecionado || "", // 2. horario (garantindo string)
-      diasSelecionados, // 3. dias
-      direcaoAlerta || "origem", // 4. direcao (o novo parâmetro obrigatório)
-      alertaSelecionadoId, // 5. idAlertaExistente
-    );
-    if (sucesso) {
+    const totalAlertasSalvosAtualmente = meusAlertas.length;
+    const querSalvarDois =
+      horarioOrigemSelecionado && horarioDestinoSelecionado;
+
+    // Se o usuário está criando novos alertas e quer os dois de uma vez, mas não tem espaço no limite de 2
+    if (
+      !alertaSelecionadoId &&
+      querSalvarDois &&
+      totalAlertasSalvosAtualmente > 0
+    ) {
+      Alert.alert(
+        "Limite Excedido",
+        "Você selecionou dois horários, mas só tem espaço para salvar mais um alerta. Desmarque um dos horários ou remova alertas antigos.",
+      );
+      return;
+    }
+
+    let salvouAlgum = false;
+
+    // Caso 1: Salvando/Atualizando Horário de Origem
+    if (horarioOrigemSelecionado) {
+      const sucesso = configurarAlerta(
+        rotaSelecionadaId,
+        horarioOrigemSelecionado,
+        diasSelecionados,
+        "origem",
+        alertaSelecionadoId, // Passa o ID se estiver editando este
+      );
+      if (sucesso) salvouAlgum = true;
+    }
+
+    // Caso 2: Salvando/Atualizando Horário de Destino
+    if (horarioDestinoSelecionado) {
+      // Se estiver salvando ambos ao mesmo tempo (criação), o segundo alerta deve ser criado como novo (idAlertaExistente = null)
+      const idParaO_Segundo = horarioOrigemSelecionado
+        ? null
+        : alertaSelecionadoId;
+
+      const sucesso = configurarAlerta(
+        rotaSelecionadaId,
+        horarioDestinoSelecionado,
+        diasSelecionados,
+        "destino",
+        idParaO_Segundo,
+      );
+      if (sucesso) salvouAlgum = true;
+    }
+
+    if (salvouAlgum) {
       setModalVisible(false);
     }
   };
@@ -233,19 +279,28 @@ export default function Favoritos() {
     setModalVisible(false);
   };
 
-  const horariosDisponiveis = useMemo(() => {
+  // 🌟 SEPARA OS HORÁRIOS DISPONÍVEIS POR DIREÇÃO
+  const horariosOrigem = useMemo(() => {
     if (!rotaSelecionadaId) return [];
-
     const rota = ROTAS_MOCK.find((r) => String(r.id) === rotaSelecionadaId);
     if (!rota) return [];
-
-    // Filtra os horários baseados na direção escolhida pelo usuário
     return rota.horarios.flatMap((bloco) =>
       bloco.itens
-        .filter((item) => item.direcao === direcaoAlerta) // Filtro pela direção
+        .filter((item) => item.direcao === "origem")
         .map((item) => item.hora),
     );
-  }, [rotaSelecionadaId, direcaoAlerta]); // Adicionado direcaoAlerta como dependência
+  }, [rotaSelecionadaId]);
+
+  const horariosDestino = useMemo(() => {
+    if (!rotaSelecionadaId) return [];
+    const rota = ROTAS_MOCK.find((r) => String(r.id) === rotaSelecionadaId);
+    if (!rota) return [];
+    return rota.horarios.flatMap((bloco) =>
+      bloco.itens
+        .filter((item) => item.direcao === "destino")
+        .map((item) => item.hora),
+    );
+  }, [rotaSelecionadaId]);
 
   const DIAS_SEMANA_MOCK = [
     { label: "S", id: "seg" },
@@ -283,7 +338,6 @@ export default function Favoritos() {
 
   const handleSelecionarRota = useCallback((id: string) => {
     setHistoricoIds((prev) => [id, ...prev.filter((i) => i !== id)]);
-
     router.push(`/horarios/${id}`);
   }, []);
 
@@ -294,7 +348,6 @@ export default function Favoritos() {
   return (
     <View className="flex-1 bg-white">
       <Screen>
-        {/* 🛠️ SOLUÇÃO DO CORTE: Tiramos o pb-28 daqui para permitir que o container ocupe a tela inteira */}
         <View className="flex-1 px-4">
           <HomeHeader
             titulo="Olá, Fulano"
@@ -322,7 +375,7 @@ export default function Favoritos() {
                   flexGrow: 1,
                   justifyContent: "center",
                   alignItems: "center",
-                  paddingBottom: 100, // ⚡ Garante espaçamento mesmo na tela vazia
+                  paddingBottom: 100,
                 }}
                 showsVerticalScrollIndicator={false}
                 className="px-6"
@@ -362,8 +415,6 @@ export default function Favoritos() {
               </ScrollView>
             ) : (
               <View className="flex-1">
-                {/* ⚡ Passamos o padding diretamente para a rolagem interna do FlatList. 
-                    Dessa forma os cards passam por baixo do MenuFooter de forma fluida sem nunca cortar! */}
                 <ListaResultadosBusca
                   filtroCategoria={filtroBuscaAtivo}
                   textoBusca={busca}
@@ -405,7 +456,7 @@ export default function Favoritos() {
                   >
                     {alertaSelecionadoId
                       ? "Configurações do Alerta"
-                      : "Definir Alerta de Horário"}
+                      : "Definir Alertas de Horário"}
                   </Text>
                   <Text
                     style={{ fontFamily: fonts.regular }}
@@ -421,129 +472,125 @@ export default function Favoritos() {
                   <Ionicons name="close" size={20} color="#64748B" />
                 </Pressable>
               </View>
-              {/* Seletor de Direção */}
-              {rotaAtual && (
-                <>
-                  <Text
-                    style={{ fontFamily: fonts.bold }}
-                    className="text-xs text-slate-400 uppercase tracking-widest mb-3"
-                  >
-                    Saindo de:
-                  </Text>
 
-                  <View className="flex-row gap-2 mb-6">
-                    <Pressable
-                      onPress={() => {
-                        setDirecaoAlerta("origem");
-                        setHorarioSelecionado(null);
-                      }}
-                      className={`flex-1 py-3 rounded-xl border items-center justify-center ${
-                        direcaoAlerta === "origem"
-                          ? "bg-[#3F5CC4] border-[#3F5CC4]"
-                          : "bg-slate-50 border-slate-200"
-                      }`}
-                    >
-                      <Text
-                        style={{ fontFamily: fonts.bold }}
-                        className={
-                          direcaoAlerta === "origem"
-                            ? "text-white"
-                            : "text-slate-600"
-                        }
-                      >
-                        Rodoviária
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        setDirecaoAlerta("destino");
-                        setHorarioSelecionado(null);
-                      }}
-                      className={`flex-1 py-3 rounded-xl border items-center justify-center ${
-                        direcaoAlerta === "destino"
-                          ? "bg-[#3F5CC4] border-[#3F5CC4]"
-                          : "bg-slate-50 border-slate-200"
-                      }`}
-                    >
-                      <Text
-                        style={{ fontFamily: fonts.bold }}
-                        className={
-                          direcaoAlerta === "destino"
-                            ? "text-white"
-                            : "text-slate-600"
-                        }
-                      >
-                        {rotaAtual.destino}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </>
-              )}
-              <Text
-                style={{ fontFamily: fonts.bold }}
-                className="text-xs text-slate-400 uppercase tracking-widest mb-3"
+              {/* 🌟 SCROLLVIEW INTERNO PARA CABER TODOS OS HORÁRIOS */}
+              <ScrollView
+                className="max-h-[350px] mb-4"
+                showsVerticalScrollIndicator={false}
               >
-                Próximas partidas:
-              </Text>
+                {rotaAtual && (
+                  <>
+                    {/* Seção 1: Horários Saindo da Rodoviária */}
+                    <Text
+                      style={{ fontFamily: fonts.bold }}
+                      className="text-xs text-slate-400 uppercase tracking-widest mb-2"
+                    >
+                      Horários disponíveis saindo da Rodoviária:
+                    </Text>
+                    <View className="flex-row flex-wrap gap-2 mb-5">
+                      {horariosOrigem.map((hr) => {
+                        const selecionado = hr === horarioOrigemSelecionado;
+                        return (
+                          <Pressable
+                            key={hr}
+                            onPress={() =>
+                              setHorarioOrigemSelecionado(
+                                selecionado ? null : hr,
+                              )
+                            }
+                            className={`px-4 py-2.5 rounded-full border ${
+                              selecionado
+                                ? "bg-[#3F5CC4] border-[#3F5CC4]"
+                                : "bg-white border-slate-200"
+                            }`}
+                          >
+                            <Text
+                              style={{
+                                fontFamily: selecionado
+                                  ? fonts.bold
+                                  : fonts.medium,
+                              }}
+                              className={`text-sm ${selecionado ? "text-white" : "text-slate-700"}`}
+                            >
+                              {hr}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
 
-              <View className="flex-row flex-wrap gap-2 mb-6">
-                {horariosDisponiveis.map((hr) => {
-                  // ⚡ Alterado aqui
-                  const selecionado = hr === horarioSelecionado;
-                  return (
-                    <Pressable
-                      key={hr}
-                      onPress={() =>
-                        setHorarioSelecionado(selecionado ? null : hr)
-                      }
-                      className={`px-4 py-2.5 rounded-full border ${
-                        selecionado
-                          ? "bg-[#3F5CC4] border-[#3F5CC4]"
-                          : "bg-white border-slate-200"
-                      }`}
+                    {/* Seção 2: Horários Saindo do Bairro/Destino */}
+                    <Text
+                      style={{ fontFamily: fonts.bold }}
+                      className="text-xs text-slate-400 uppercase tracking-widest mb-2"
                     >
-                      <Text
-                        style={{
-                          fontFamily: selecionado ? fonts.bold : fonts.medium,
-                        }}
-                        className={`text-sm ${selecionado ? "text-white" : "text-slate-700"}`}
+                      Horários disponíveis saindo de {rotaAtual.destino}:
+                    </Text>
+                    <View className="flex-row flex-wrap gap-2 mb-5">
+                      {horariosDestino.map((hr) => {
+                        const selecionado = hr === horarioDestinoSelecionado;
+                        return (
+                          <Pressable
+                            key={hr}
+                            onPress={() =>
+                              setHorarioDestinoSelecionado(
+                                selecionado ? null : hr,
+                              )
+                            }
+                            className={`px-4 py-2.5 rounded-full border ${
+                              selecionado
+                                ? "bg-[#3F5CC4] border-[#3F5CC4]"
+                                : "bg-white border-slate-200"
+                            }`}
+                          >
+                            <Text
+                              style={{
+                                fontFamily: selecionado
+                                  ? fonts.bold
+                                  : fonts.medium,
+                              }}
+                              className={`text-sm ${selecionado ? "text-white" : "text-slate-700"}`}
+                            >
+                              {hr}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </>
+                )}
+
+                <Text
+                  style={{ fontFamily: fonts.bold }}
+                  className="text-xs text-slate-400 uppercase tracking-widest mb-3"
+                >
+                  Dias de repetição
+                </Text>
+                <View className="flex-row justify-between mb-2 bg-slate-50 p-2.5 rounded-2xl">
+                  {DIAS_SEMANA_MOCK.map((dia) => {
+                    const estaAtivo = diasSelecionados.includes(dia.id);
+                    return (
+                      <Pressable
+                        key={dia.id}
+                        onPress={() => handleAlternarDia(dia.id)}
+                        className={`w-10 h-10 rounded-full items-center justify-center ${
+                          estaAtivo ? "bg-[#3F5CC4]" : "bg-transparent"
+                        }`}
                       >
-                        {hr}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <Text
-                style={{ fontFamily: fonts.bold }}
-                className="text-xs text-slate-400 uppercase tracking-widest mb-3"
-              >
-                Dias de repetição
-              </Text>
-              <View className="flex-row justify-between mb-8 bg-slate-50 p-2.5 rounded-2xl">
-                {DIAS_SEMANA_MOCK.map((dia) => {
-                  const estaAtivo = diasSelecionados.includes(dia.id);
-                  return (
-                    <Pressable
-                      key={dia.id}
-                      onPress={() => handleAlternarDia(dia.id)}
-                      className={`w-10 h-10 rounded-full items-center justify-center ${
-                        estaAtivo ? "bg-[#3F5CC4]" : "bg-transparent"
-                      }`}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: estaAtivo ? fonts.bold : fonts.medium,
-                        }}
-                        className={`text-sm ${estaAtivo ? "text-white" : "text-slate-500"}`}
-                      >
-                        {dia.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                        <Text
+                          style={{
+                            fontFamily: estaAtivo ? fonts.bold : fonts.medium,
+                          }}
+                          className={`text-sm ${estaAtivo ? "text-white" : "text-slate-500"}`}
+                        >
+                          {dia.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+
               <View className="flex-row gap-3">
                 {alertaSelecionadoId !== null && (
                   <Pressable
@@ -568,7 +615,9 @@ export default function Favoritos() {
                     style={{ fontFamily: fonts.bold }}
                     className="text-white text-base"
                   >
-                    {alertaSelecionadoId ? "Atualizar Alerta" : "Ativar Alerta"}
+                    {alertaSelecionadoId
+                      ? "Atualizar Alerta"
+                      : "Ativar Alertas"}
                   </Text>
                 </Pressable>
               </View>

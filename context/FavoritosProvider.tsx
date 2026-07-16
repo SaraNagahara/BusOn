@@ -90,11 +90,12 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
   };
 
   // 🔔 CONFIGURAR OU ATUALIZAR ALERTA (Máximo 2 ativos no App no total)
+  // 🔔 CONFIGURAR OU ATUALIZAR ALERTA (Máximo 2 ativos no App no total)
   const configurarAlerta = (
     idRota: string,
     horario: string,
     dias: string[],
-    direcao: "origem" | "destino", // Receba o parâmetro
+    direcao: "origem" | "destino",
     idAlertaExistente?: string | null,
   ): boolean => {
     const outrosAlertas = meusAlertas.filter(
@@ -107,7 +108,7 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (idAlertaExistente) {
-      // 👈 CORREÇÃO: Atualize também o campo direcao aqui
+      // Atualiza o alerta existente mantendo o ID intacto
       setMeusAlertas((prev) =>
         prev.map((alerta) =>
           alerta.idAlerta === idAlertaExistente
@@ -116,10 +117,10 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
         ),
       );
     } else {
-      // 👈 CORREÇÃO: Salve a direção vinda do parâmetro, não fixo como "origem"
+      // ⚡ SOLUÇÃO: Incluindo a direção no ID para garantir unicidade absoluta no salvamento em lote
       const novoAlerta: AlertaProps = {
         direcao,
-        idAlerta: `${idRota}-${Date.now()}`,
+        idAlerta: `${idRota}-${direcao}-${Date.now()}`, // Ex: "11-origem-1718221192775"
         idRota,
         horario,
         dias,
