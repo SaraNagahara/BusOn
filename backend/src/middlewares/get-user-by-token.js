@@ -1,31 +1,30 @@
 const User = require("../models/User");
-
 const getToken = require("./getToken");
 const jwt = require("jsonwebtoken");
 
-const getUserByToken = async (req, res) => {
+const getUserByToken = async (req) => {
   const token = getToken(req);
 
- try {
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  if (!token) {
+    throw new Error("Token não informado");
+  }
+
+  const decoded = jwt.verify(
+    token,
+    process.env.JWT_SECRET
+  );
 
   const user = await User.findOne({
-    where: { id: decoded.id },
+    where: {
+      id: decoded.id
+    }
   });
 
   if (!user) {
-    return res.status(404).json({
-      message: "Usuário não encontrado",
-    });
+    throw new Error("Usuário não encontrado");
   }
 
   return user;
-
-} catch (err) {
-  return res.status(403).json({
-    message: "Token inválido ou expirado",
-  });
-}
 };
 
 module.exports = getUserByToken;
