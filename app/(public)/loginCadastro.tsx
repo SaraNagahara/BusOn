@@ -79,7 +79,7 @@ export default function LoginCadastro() {
 
   const handleLogin = async () => {
     const response = await fetch(
-      "https://noncontributing-spankingly-marianela.ngrok-free.dev/users/login",
+      "https://noncontributing-spankingly-marianela.ngrok-free.dev/auth/login",
       {
         method: "POST",
         headers: {
@@ -103,7 +103,7 @@ export default function LoginCadastro() {
     }
 
     const response = await fetch(
-      "https://noncontributing-spankingly-marianela.ngrok-free.dev/users/register",
+      "https://noncontributing-spankingly-marianela.ngrok-free.dev/auth/register",
       {
         method: "POST",
         headers: {

@@ -92,9 +92,9 @@ export default function TodosHorariosDaRotaSelecionada() {
 
   const periodosDisponiveis: PeriodoItem[] = [
     { id: "todos", label: "Dia Todo" },
-    { id: "matutino", label: "Matutino" },
-    { id: "vespertino", label: "Vespertino" },
-    { id: "noturno", label: "Noturno" },
+    { id: "matutino", label: "Manhã" },
+    { id: "vespertino", label: "Tarde" },
+    { id: "noturno", label: "Noite" },
   ];
 
   const handleAplicarFiltro = (operacaoId: string, periodoId: string) => {
