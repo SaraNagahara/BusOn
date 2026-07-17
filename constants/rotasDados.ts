@@ -13,7 +13,6 @@ export interface BlocoHorarios {
 
 export interface RotaProps {
   id: string;
-  numeroLinha: string;
   destino: string;
   origem: string;
   tipo: "urbanas" | "intermunicipais";
@@ -47,7 +46,6 @@ export const calcularProximoHorario = (
 export const ROTAS_MOCK: RotaProps[] = [
   {
     id: "1",
-    numeroLinha: "11",
     destino: "Canguera",
     origem: "Terminal de São Roque",
     tipo: "urbanas",
@@ -86,7 +84,6 @@ export const ROTAS_MOCK: RotaProps[] = [
   },
   {
     id: "2",
-    numeroLinha: "15",
     destino: "Sorocaba",
     origem: "Terminal de São Roque",
     tipo: "intermunicipais",
@@ -113,7 +110,6 @@ export const ROTAS_MOCK: RotaProps[] = [
   },
   {
     id: "3",
-    numeroLinha: "22",
     destino: "Guaçu",
     origem: "Terminal de São Roque",
     tipo: "urbanas",
@@ -140,7 +136,6 @@ export const ROTAS_MOCK: RotaProps[] = [
   },
   {
     id: "4",
-    numeroLinha: "30",
     destino: "Mairinque",
     origem: "Terminal de São Roque",
     tipo: "intermunicipais",
@@ -167,7 +162,6 @@ export const ROTAS_MOCK: RotaProps[] = [
   },
   {
     id: "5",
-    numeroLinha: "41",
     destino: "Mailasqui",
     origem: "Terminal de São Roque",
     tipo: "urbanas",
@@ -194,7 +188,6 @@ export const ROTAS_MOCK: RotaProps[] = [
   },
   {
     id: "6",
-    numeroLinha: "50",
     destino: "São João novo",
     origem: "Terminal de São Roque",
     tipo: "urbanas",
@@ -221,7 +214,6 @@ export const ROTAS_MOCK: RotaProps[] = [
   },
   {
     id: "7",
-    numeroLinha: "60",
     destino: "São Paulo",
     origem: "Terminal de São Roque",
     tipo: "intermunicipais",
@@ -248,7 +240,6 @@ export const ROTAS_MOCK: RotaProps[] = [
   },
   {
     id: "8",
-    numeroLinha: "72",
     destino: "Ibiúna",
     origem: "Terminal de São Roque",
     tipo: "intermunicipais",

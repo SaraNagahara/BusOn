@@ -3,7 +3,6 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
 
 interface HeaderLinhaSelecionadaProps {
-  numeroLinha: string | number;
   nomeDestino: string;
   onPressFiltro?: () => void;
   isFavorito?: boolean;
@@ -11,7 +10,6 @@ interface HeaderLinhaSelecionadaProps {
 }
 
 export default function HeaderLinhaSelecionada({
-  numeroLinha,
   nomeDestino,
   onPressFiltro,
   isFavorito = false,
@@ -25,7 +23,7 @@ export default function HeaderLinhaSelecionada({
           style={{ fontFamily: fonts.bold }}
           className="text-[#1A1C1E] text-2xl uppercase tracking-tight"
         >
-          LINHA {numeroLinha} – {nomeDestino}
+          LINHA – {nomeDestino}
         </Text>
 
         <View className="flex-row items-center mt-1">

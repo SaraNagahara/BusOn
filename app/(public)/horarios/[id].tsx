@@ -148,7 +148,6 @@ export default function TodosHorariosDaRotaSelecionada() {
     <Screen>
       <View className="px-6 pb-4">
         <HeaderLinhaSelecionada
-          numeroLinha={rota.numeroLinha}
           nomeDestino={rota.destino}
           onPressFiltro={() => setModalFiltroVisivel(true)}
           isFavorito={isFavorito}
