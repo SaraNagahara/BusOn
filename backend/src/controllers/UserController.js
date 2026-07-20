@@ -11,12 +11,6 @@ const getToken = require("../middlewares/getToken");
 
 module.exports = class UserController {
 
-  static async homepage(req, res) {
-    return res.json({
-      message: "Essa é a home",
-    });
-  }
-
   // change user password
   static async changeUserPassword(req, res) {
     const { password, newPassword, newPasswordConfirmation } = req.body;

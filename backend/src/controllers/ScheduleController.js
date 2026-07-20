@@ -34,7 +34,7 @@ static async GetSchedule(req,res){
    id: horarios[0].id,
    numeroLinha: horarios[0].titulo,
    destino: horarios[0].destino,
-   origem: horarios[0].origem,
+   origem: "Terminal de São roque",
    tipo: "urbanas",
 
    horarios: []

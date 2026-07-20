@@ -7,7 +7,6 @@ const VerifyToken = require("../middlewares/virifyToken");
 
 
 router.post("/delete", VerifyToken, UserController.DeleteUserByID);
-router.get("/home", VerifyToken, UserController.homepage)
 
 // Routes Update authenticated user data
 router.post("/changePassowrd", VerifyToken, UserController.changeUserPassword)
