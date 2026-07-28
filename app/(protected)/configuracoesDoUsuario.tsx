@@ -5,13 +5,39 @@ import { MenuOpcoesBloco } from "@/components/MenuOpcoesBlocoPerfil";
 import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // 🚀 Importado para ler o storage
 import { Redirect, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function ConfiguracoesDoUsuario() {
   const router = useRouter();
   const { usuarioLogado } = useAuth();
+
+  // 🚀 Estado local apenas para o nome do usuário
+  const [nomeUsuario, setNomeUsuario] = useState<string>("");
+
+  // 🚀 Busca o nome do usuário salvo no AsyncStorage
+  useEffect(() => {
+    async function carregarNomeUsuario() {
+      if (usuarioLogado) {
+        try {
+          const userStorage = await AsyncStorage.getItem("@user");
+          if (userStorage) {
+            const userParsed = JSON.parse(userStorage);
+            setNomeUsuario(userParsed.name || userParsed.nome || "");
+          }
+        } catch (error) {
+          console.error(
+            "Erro ao carregar nome do usuário nas Configurações:",
+            error,
+          );
+        }
+      }
+    }
+
+    carregarNomeUsuario();
+  }, [usuarioLogado]);
 
   // 🛡️ Ajustado para a rota padrão do seu 404 do Expo Router
   if (!usuarioLogado) {
@@ -50,16 +76,6 @@ export default function ConfiguracoesDoUsuario() {
           params: { origem: "perfil" },
         }),
     },
-    // {
-    //   titulo: "Alterar telefone",
-    //   iconeNome: "call-outline" as const,
-    //   // 🚀 ADICIONADO: Passando a origem para a tela de telefone
-    //   onPress: () =>
-    //     router.push({
-    //       pathname: "/alterarTelefone",
-    //       params: { origem: "perfil" },
-    //     }),
-    // },
     {
       titulo: "Termos e condições",
       iconeNome: "document-text-outline" as const,
@@ -69,7 +85,6 @@ export default function ConfiguracoesDoUsuario() {
       titulo: "Deletar conta",
       iconeNome: "trash-outline" as const,
       bgIconeCor: "#EF4444",
-      // 🚀 ADICIONADO: Passando a origem para a tela de deletar conta
       onPress: () =>
         router.push({
           pathname: "/TemCertezaDeletarConta",
@@ -92,7 +107,7 @@ export default function ConfiguracoesDoUsuario() {
           </TouchableOpacity>
         </View>
 
-        {/* 🚀 SCROLLVIEW RESPONSIVO: Permite que o conteúdo role perfeitamente em telas pequenas */}
+        {/* 🚀 SCROLLVIEW RESPONSIVO */}
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
@@ -103,19 +118,21 @@ export default function ConfiguracoesDoUsuario() {
             <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center border-4 border-slate-50 shadow-sm mb-3">
               <Ionicons name="person" size={42} color="#3F5CC4" />
             </View>
+
+            {/* ⚡ APENAS O NOME DO USUÁRIO VENDO DO ASYNC STORAGE */}
             <Text
               style={{ fontFamily: fonts.bold }}
               className="text-xl text-slate-900 text-center"
             >
-              Fulano de Tal
+              {nomeUsuario || "Usuário"}
             </Text>
           </View>
 
-          {/* ⚙️ BLOCO DE MENU ADAPTÁVEL (Preenche a largura correta agora) */}
+          {/* ⚙️ BLOCO DE MENU ADAPTÁVEL */}
           <MenuOpcoesBloco opcoes={opcoesConfiguracoes} />
         </ScrollView>
 
-        {/* Rodapé fixo na base da tela (Fica fora da rolagem, excelente UX!) */}
+        {/* Rodapé fixo na base da tela */}
         <MenuFooter abaAtiva="perfil" aoMudarAba={handleNavegacaoFooter} />
       </Screen>
     </View>

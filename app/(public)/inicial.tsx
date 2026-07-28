@@ -11,10 +11,11 @@ import { RotasFavoritas } from "@/components/RotasFavoritas";
 import { Screen } from "@/components/safearea";
 import { SearchBar } from "@/components/searchBar";
 import { TituloFiltro } from "@/components/TituloFiltro";
-import { ROTAS_MOCK } from "@/constants/rotasDados"; // Importe o MOCK
+import { ToastNotificacao } from "@/components/ToastNotificacao";
+import { ROTAS_MOCK } from "@/constants/rotasDados";
 import { useAuth } from "@/context/AuthProvider";
 import { useFavoritos } from "@/context/FavoritosProvider";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, TextInput, View } from "react-native";
 
@@ -29,6 +30,7 @@ export default function Inicial() {
     useState<TipoLinhaOpcoes>("todas");
   const [estaBuscando, setEstaBuscando] = useState(false);
   const [rotaEmDestaque, setRotaEmDestaque] = useState<string | null>(null);
+
   const normalizar = (t: string) =>
     t
       .toLowerCase()
@@ -41,6 +43,31 @@ export default function Inicial() {
     "3",
     "4",
   ]);
+
+  // 🚀 PARÂMETRO E ESTADO DO TOAST DE LOGIN
+  const { boasVindas } = useLocalSearchParams();
+  const [toast, setToast] = useState<{
+    mensagem: string;
+    tipo: "sucesso" | "erro";
+    mostrar: boolean;
+  }>({
+    mensagem: "",
+    tipo: "sucesso",
+    mostrar: false,
+  });
+
+  useEffect(() => {
+    if (boasVindas === "true") {
+      setToast({
+        mensagem: "Login efetuado com sucesso!",
+        tipo: "sucesso",
+        mostrar: true,
+      });
+
+      // 🧹 Remove o parâmetro 'boasVindas' da rota para que NÃO volte a aparecer ao voltar para esta tela
+      router.setParams({ boasVindas: undefined });
+    }
+  }, [boasVindas]);
 
   useEffect(() => {
     if (busca.length > 0) {
@@ -66,7 +93,6 @@ export default function Inicial() {
   } = useFavoritos();
   const { usuarioLogado } = useAuth();
 
-  // Mapeia os favoritos para o formato completo que o RotasFavoritas espera
   const rotasFavoritasCompletas = useMemo(() => {
     return meusFavoritos
       .map((fav) => ROTAS_MOCK.find((r) => r.id === fav.id))
@@ -74,7 +100,6 @@ export default function Inicial() {
   }, [meusFavoritos]);
 
   const finalizarBusca = useCallback(() => {
-    // 1. Promove a rota para o histórico se for um resultado único
     if (rotaEmDestaque) {
       setHistoricoIds((prev) => [
         rotaEmDestaque,
@@ -82,7 +107,6 @@ export default function Inicial() {
       ]);
     }
 
-    // 2. Limpa os estados de busca
     searchBarRef.current?.blur();
     setBusca("");
     setEstaBuscando(false);
@@ -93,18 +117,16 @@ export default function Inicial() {
   const handleNavegacaoFooter = useCallback(
     (aba: TabOpcoes) => {
       if (aba === "home") {
-        if (estaBuscando) finalizarBusca(); // Usa a nova função
+        if (estaBuscando) finalizarBusca();
         return;
       }
 
-      // Se o usuário mudar de aba (ex: para favoritas) enquanto buscava,
-      // também finalizamos e salvamos a rota no histórico
       if (estaBuscando) finalizarBusca();
 
       if (aba === "favoritas") router.push("/favoritos");
       if (aba === "perfil") router.push("/perfil");
     },
-    [estaBuscando, finalizarBusca], // Adicionado finalizarBusca como dependência
+    [estaBuscando, finalizarBusca],
   );
 
   useEffect(() => {
@@ -113,7 +135,6 @@ export default function Inicial() {
 
   const handleSelecionarRota = useCallback(
     (id: string) => {
-      // Aqui você já adiciona ao histórico, mas pode usar o finalizarBusca também
       setHistoricoIds((prev) => [id, ...prev.filter((i) => i !== id)]);
       finalizarBusca();
       router.push(`/horarios/${id}`);
@@ -123,10 +144,8 @@ export default function Inicial() {
 
   const handleAlternarFavoritoClick = useCallback(
     (id: string, destino: string) => {
-      // 🔍 Verifica se a rota já está nos favoritos
       const jaEhFavorito = listaFavoritosIds.includes(id);
 
-      // 📝 Define o título e a mensagem com base no estado atual
       const titulo = jaEhFavorito
         ? "Remover dos Favoritos"
         : "Adicionar aos Favoritos";
@@ -142,7 +161,7 @@ export default function Inicial() {
         },
       ]);
     },
-    [alternarFavorito, listaFavoritosIds], // ⚡ Adicionado listaFavoritosIds aqui para atualizar o comportamento sempre que a lista mudar
+    [alternarFavorito, listaFavoritosIds],
   );
 
   const handleAdicionarFavorita = useCallback(() => {
@@ -153,29 +172,19 @@ export default function Inicial() {
     }
   }, [usuarioLogado]);
 
-  const handleSairDaBusca = useCallback(() => {
-    // SE houver uma rota destacada, salvamos ela no histórico antes de sair
-    if (rotaEmDestaque) {
-      setHistoricoIds((prev) => {
-        // Remove caso já exista e coloca no topo
-        const novoHistorico = [
-          rotaEmDestaque,
-          ...prev.filter((i) => i !== rotaEmDestaque),
-        ];
-        return novoHistorico.slice(0, 5); // Mantém apenas os 5 mais recentes
-      });
-    }
-
-    searchBarRef.current?.blur();
-    setBusca("");
-    setEstaBuscando(false);
-    setFiltroBuscaAtivo("todas");
-    setRotaEmDestaque(null); // Limpa o destaque
-  }, [rotaEmDestaque]);
-
   return (
     <View className="flex-1 bg-white">
       <Screen>
+        {/* TOAST DE NOTIFICAÇÃO (Posicionado em cima de forma flutuante) */}
+        <View className="absolute top-12 left-4 right-4 z-50">
+          <ToastNotificacao
+            mensagem={toast.mensagem}
+            tipo={toast.tipo}
+            mostrar={toast.mostrar}
+            aoFechar={() => setToast((prev) => ({ ...prev, mostrar: false }))}
+          />
+        </View>
+
         <View className="flex-1 px-4 pb-2">
           <HomeHeader subtitulo="Qual o seu destino de hoje ?" />
           <SearchBar
@@ -212,7 +221,6 @@ export default function Inicial() {
               />
 
               <CarrosselRotas
-                // Ajuste: tradução interna se necessário ou passe "origem"/"destino" direto
                 filtro={
                   filtroSelecionado === "rodoviaria" ? "origem" : "destino"
                 }
