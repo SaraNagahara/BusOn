@@ -3,32 +3,34 @@ import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
 import { Screen } from "@/components/safearea";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
-import { Redirect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 export default function TemCertezaLogout() {
   const router = useRouter();
-  const { usuarioLogado, setUsuarioLogado } = useAuth(); // ⚡ Acesse a mutation do seu Provider aqui
 
-  // 🛡️ Trava de segurança: impede acesso direto via URL caso não esteja logado
-  if (!usuarioLogado) {
-    return <Redirect href="/notfound" />;
-  }
+  // ⚡ Desestruturação com a função 'encerrarSessao' ajustada do Provider
+  const { usuarioLogado, encerrarSessao } = useAuth();
 
-  // 🚪 EFETUA O LOGOUT REAL: Altera o estado global e redireciona de volta ao perfil
-  const handleConfirmarLogout = useCallback(() => {
-    if (setUsuarioLogado) {
-      setUsuarioLogado(false);
+  // 🚪 EFETUA O LOGOUT REAL: Limpa o AsyncStorage, reseta os estados e redireciona
+  const handleConfirmarLogout = useCallback(async () => {
+    try {
+      if (encerrarSessao) {
+        await encerrarSessao(); // Limpa @token e @user do AsyncStorage
+      }
+
+      // 🚀 Redireciona para o perfil (ou login) informando a ação
+      router.replace({
+        pathname: "/perfil",
+        params: { deslogado: "true" },
+      });
+    } catch (error) {
+      console.error("Erro ao encerrar a sessão:", error);
     }
-    // 🚀 Passando o parâmetro na rota para a tela de Perfil saber que teve um logout
-    router.replace({
-      pathname: "/perfil",
-      params: { deslogado: "true" },
-    });
-  }, [setUsuarioLogado, router]);
+  }, [encerrarSessao, router]);
 
-  // ↩️ APENAS CANCELA: Retorna à tela de configurações mantendo a sessão ativa
+  // ↩️ APENAS CANCELA: Retorna à tela anterior mantendo a sessão ativa
   const handleCancelar = useCallback(() => {
     router.back();
   }, [router]);
@@ -36,9 +38,9 @@ export default function TemCertezaLogout() {
   return (
     <View className="flex-1 bg-[#F2F2F7]">
       <Screen>
-        {/* 📦 CONTEÚDO CENTRAL (FIEL AO SEU SEGUNDO PRINT) */}
+        {/* 📦 CONTEÚDO CENTRAL */}
         <View className="flex-1 items-center justify-center px-8">
-          {/* 🚪 CIRCULO AZUL COM ÍCONE DE LOGOUT */}
+          {/* 🚪 CÍRCULO AZUL COM ÍCONE DE LOGOUT */}
           <View className="w-24 h-24 bg-[#1D61E7] rounded-full items-center justify-center mb-8 shadow-sm">
             <Ionicons
               name="log-out-outline"
@@ -66,21 +68,21 @@ export default function TemCertezaLogout() {
 
           {/* 🔘 CONJUNTO DE BOTÕES DE AÇÃO */}
           <View className="w-full gap-3">
-            {/* Botão Sair da Conta (Branco / Vazado com Texto Azul Correto) */}
+            {/* Botão Sair da Conta (Branco / Vazado com Texto Azul) */}
             <TouchableOpacity
               onPress={handleConfirmarLogout}
               activeOpacity={0.7}
               className="w-full py-4 rounded-3xl items-center justify-center bg-white border border-gray-200 shadow-sm active:bg-gray-50"
             >
               <Text
-                style={{ fontFamily: fonts.bold, color: "#1D61E7" }} // ⚡ Cor alterada via Style nativo para ignorar heranças incorretas
+                style={{ fontFamily: fonts.bold, color: "#1D61E7" }}
                 className="text-base"
               >
                 Sair da Conta
               </Text>
             </TouchableOpacity>
 
-            {/* Botão Cancelar (Nosso ButtonAzulPadrao Reutilizável) */}
+            {/* Botão Cancelar */}
             <ButtonAzulPadrao
               titulo="Cancelar"
               onPress={handleCancelar}

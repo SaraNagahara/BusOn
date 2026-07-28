@@ -1,17 +1,18 @@
 import { AuthHeader } from "@/components/AuthHeader";
 import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
 import CardBranco from "@/components/CardBranco";
+import { FundoAzul } from "@/components/fundoazul";
+import { Screen } from "@/components/safearea";
+import { ToastNotificacao } from "@/components/ToastNotificacao";
+import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Link,
-  useLocalSearchParams,
-  useNavigation,
-  useRouter,
-} from "expo-router"; // 🚀 Adicionados useRouter e useNavigation
-import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Link, useRouter } from "expo-router";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -19,20 +20,50 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-
-import { FundoAzul } from "@/components/fundoazul";
-import { Screen } from "@/components/safearea";
+import { z } from "zod";
 
 type TabOption = "cadastrar" | "entrar";
 
+// 🚀 SCHEMAS DE VALIDAÇÃO ZOD
+const loginSchema = z.object({
+  loginEmail: z
+    .string()
+    .min(1, "O e-mail é obrigatório")
+    .email("Digite um e-mail válido"),
+  loginPassword: z
+    .string()
+    .min(1, "A senha é obrigatória")
+    .min(6, "A senha deve ter no mínimo 6 caracteres"),
+});
+
+const registerSchema = z
+  .object({
+    registerName: z
+      .string()
+      .min(1, "O nome é obrigatório")
+      .min(3, "O nome deve ter no mínimo 3 caracteres"),
+    registerEmail: z
+      .string()
+      .min(1, "O e-mail é obrigatório")
+      .email("Digite um e-mail válido"),
+    registerPassword: z
+      .string()
+      .min(1, "A senha é obrigatória")
+      .min(6, "A senha deve ter no mínimo 6 caracteres"),
+    registerConfirmPassword: z
+      .string()
+      .min(1, "A confirmação de senha é obrigatória"),
+  })
+  .refine((data) => data.registerPassword === data.registerConfirmPassword, {
+    message: "As senhas não coincidem!",
+    path: ["registerConfirmPassword"],
+  });
+
 export default function LoginCadastro() {
-  const params = useLocalSearchParams();
-  const router = useRouter(); // 🚀 Hook de rotas do expo
-  const navigation = useNavigation(); // 🚀 Hook para verificar o histórico de navegação
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<TabOption>("entrar");
   const [rememberMe, setRememberMe] = useState(false);
-  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   // Estados de visibilidade das senhas
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -47,27 +78,22 @@ export default function LoginCadastro() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
-  const [registerPhone, setRegisterPhone] = useState("");
 
-  useEffect(() => {
-    const assinaturaRemoverTela = navigation.addListener(
-      "beforeRemove",
-      (e) => {
-        // Se existir histórico para voltar, deixa o fluxo seguir normal
-        if (navigation.canGoBack()) {
-          return;
-        }
+  // 🚀 ESTADOS DE ERROS INDIVIDUAIS DOS CAMPOS (ZOD)
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-        // 🔒 Se NÃO tiver para onde voltar, impede o travamento/erro do GO_BACK
-        e.preventDefault();
+  // 🚀 ESTADO DO TOAST DE NOTIFICAÇÃO
+  const [toast, setToast] = useState<{
+    mensagem: string;
+    tipo: "sucesso" | "erro";
+    mostrar: boolean;
+  }>({
+    mensagem: "",
+    tipo: "sucesso",
+    mostrar: false,
+  });
 
-        // 🏠 Chuta o usuário direto para a tela inicial limpando a árvore de navegação
-        router.replace("/");
-      },
-    );
-
-    return () => assinaturaRemoverTela();
-  }, [navigation]);
+  const { salvarSessao } = useAuth();
 
   const activeShadow: ViewStyle = {
     elevation: 3,
@@ -77,10 +103,37 @@ export default function LoginCadastro() {
     shadowRadius: 2,
   };
 
+  // Alternar abas limpando erros anteriores
+  const handleTabChange = (tab: TabOption) => {
+    setErrors({});
+    setActiveTab(tab);
+  };
+
   const handleLogin = async () => {
-    const response = await fetch(
-      "https://noncontributing-spankingly-marianela.ngrok-free.dev/auth/login",
-      {
+    setErrors({});
+
+    // 1. Validação local com Zod
+    const validation = loginSchema.safeParse({
+      loginEmail,
+      loginPassword,
+    });
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        if (err.path[0] === "loginEmail") {
+          fieldErrors.loginEmail =
+            "O email que você inseriu não esta conectado a uma conta";
+        } else if (err.path[0] === "loginPassword") {
+          fieldErrors.loginPassword = "A senha inserida está incorreta.";
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/auth/login", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -89,37 +142,159 @@ export default function LoginCadastro() {
           loginEmail,
           loginPassword,
         }),
-      },
-    );
+      });
 
-    const dataLogin = await response.json();
-    console.log(dataLogin);
+      const dataLogin = await response.json();
+
+      if (response.ok && dataLogin.token) {
+        await AsyncStorage.setItem("@token", dataLogin.token);
+        await AsyncStorage.setItem("@user", JSON.stringify(dataLogin.user));
+
+        if (salvarSessao) {
+          await salvarSessao(dataLogin.token, dataLogin.user);
+        }
+
+        router.replace({
+          pathname: "/inicial",
+          params: { boasVindas: "true" },
+        });
+      } else {
+        // Trata as mensagens vindas do backend para exibir no Toast ou no campo
+        const respostaBackend = JSON.stringify(dataLogin).toLowerCase();
+
+        let mensagemToast = "Erro ao realizar login.";
+
+        if (
+          respostaBackend.includes("senha") ||
+          respostaBackend.includes("password") ||
+          respostaBackend.includes("incorrect") ||
+          respostaBackend.includes("inválid")
+        ) {
+          mensagemToast = "A senha inserida está incorreta.";
+        } else if (
+          respostaBackend.includes("email") ||
+          respostaBackend.includes("user") ||
+          respostaBackend.includes("usuário") ||
+          respostaBackend.includes("not found") ||
+          respostaBackend.includes("encontrado")
+        ) {
+          mensagemToast =
+            "O email que você inseriu não esta conectado a uma conta";
+        }
+
+        setToast({
+          mensagem: mensagemToast,
+          tipo: "erro",
+          mostrar: true,
+        });
+      }
+    } catch (error) {
+      console.error("Erro no login:", error);
+      setToast({
+        mensagem: "Erro ao conectar ao servidor.",
+        tipo: "erro",
+        mostrar: true,
+      });
+    }
   };
 
   const handleRegister = async () => {
-    if (registerPassword !== registerConfirmPassword) {
-      alert("As senhas não coincidem!");
+    setErrors({});
+
+    // 1. Validação local com Zod
+    const validation = registerSchema.safeParse({
+      registerName,
+      registerEmail,
+      registerPassword,
+      registerConfirmPassword,
+    });
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.issues.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0].toString()] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
       return;
     }
 
-    const response = await fetch(
-      "https://noncontributing-spankingly-marianela.ngrok-free.dev/auth/register",
-      {
+    // 2. Formata o nome antes de enviar
+    const nameFormatted = registerName
+      .trim()
+      .toLowerCase()
+      .split(" ")
+      .filter(Boolean)
+      .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1))
+      .join(" ");
+
+    try {
+      const response = await fetch("http://localhost:5000/auth/register", {
         method: "POST",
         headers: {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          registerName,
+          registerName: nameFormatted,
           registerEmail,
           registerPassword,
           registerConfirmPassword,
         }),
-      },
-    );
+      });
 
-    const dataRegister = await response.json();
-    console.log(dataRegister);
+      const dataRegister = await response.json();
+
+      if (!response.ok) {
+        // Converte a resposta do backend para texto legível para inspeção
+        const respostaBackend = JSON.stringify(dataRegister).toLowerCase();
+
+        // Se o erro indicar e-mail, duplicidade, "exists" ou "unique", forçamos a mensagem customizada
+        let mensagemErro = "Erro ao realizar cadastro.";
+
+        if (
+          respostaBackend.includes("email") ||
+          respostaBackend.includes("existe") ||
+          respostaBackend.includes("exist") ||
+          respostaBackend.includes("duplicate") ||
+          respostaBackend.includes("unique") ||
+          response.status === 400 ||
+          response.status === 409 ||
+          response.status === 500 // Muitos backends retornam 500 para erro de duplicidade no DB
+        ) {
+          mensagemErro = "Este e-mail já está cadastrado.";
+        }
+
+        setToast({
+          mensagem: mensagemErro,
+          tipo: "erro",
+          mostrar: true,
+        });
+        return;
+      }
+
+      // Sucesso!
+      setToast({
+        mensagem: "Usuário cadastrado com sucesso!",
+        tipo: "sucesso",
+        mostrar: true,
+      });
+
+      setRegisterName("");
+      setRegisterEmail("");
+      setRegisterPassword("");
+      setRegisterConfirmPassword("");
+
+      // Alterna para a aba de entrar
+      setActiveTab("entrar");
+    } catch (error) {
+      console.error("Erro no registro:", error);
+      setToast({
+        mensagem: "Erro ao conectar ao servidor.",
+        tipo: "erro",
+        mostrar: true,
+      });
+    }
   };
 
   return (
@@ -136,29 +311,57 @@ export default function LoginCadastro() {
               subtitulo="Crie uma conta ou faça seu login"
             />
 
+            {/* TOAST DE NOTIFICAÇÃO */}
+            <View className="absolute top-12 left-4 right-4 z-50">
+              <ToastNotificacao
+                mensagem={toast.mensagem}
+                tipo={toast.tipo}
+                mostrar={toast.mostrar}
+                aoFechar={() =>
+                  setToast((prev) => ({ ...prev, mostrar: false }))
+                }
+              />
+            </View>
+
             <View className="flex-1">
               <CardBranco>
                 {/* SELETOR DE ABAS */}
                 <View className="flex-row bg-[#F2F4F7] border border-[#D1D5DB] rounded-2xl p-1 mb-6">
                   <TouchableOpacity
-                    onPress={() => setActiveTab("cadastrar")}
-                    className={`flex-1 py-3 rounded-xl items-center justify-center ${activeTab === "cadastrar" ? "bg-white border border-[#7B8AD7]" : ""}`}
-                    style={activeTab === "cadastrar" ? activeShadow : {}}
+                    onPress={() => handleTabChange("cadastrar")}
+                    className={`flex-1 py-3 rounded-xl items-center justify-center ${
+                      activeTab === "cadastrar"
+                        ? "bg-white border border-[#7B8AD7]"
+                        : ""
+                    }`}
+                    style={activeTab === "cadastrar" ? activeShadow : undefined}
                   >
                     <Text
-                      className={`text-base ${activeTab === "cadastrar" ? "text-black font-bold" : "text-gray-400"}`}
+                      className={`text-base ${
+                        activeTab === "cadastrar"
+                          ? "text-black font-bold"
+                          : "text-gray-400"
+                      }`}
                     >
                       Cadastrar
                     </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    onPress={() => setActiveTab("entrar")}
-                    className={`flex-1 py-3 rounded-xl items-center justify-center ${activeTab === "entrar" ? "bg-white border border-[#7B8AD7]" : ""}`}
-                    style={activeTab === "entrar" ? activeShadow : {}}
+                    onPress={() => handleTabChange("entrar")}
+                    className={`flex-1 py-3 rounded-xl items-center justify-center ${
+                      activeTab === "entrar"
+                        ? "bg-white border border-[#7B8AD7]"
+                        : ""
+                    }`}
+                    style={activeTab === "entrar" ? activeShadow : undefined}
                   >
                     <Text
-                      className={`text-base ${activeTab === "entrar" ? "text-black font-bold" : "text-gray-400"}`}
+                      className={`text-base ${
+                        activeTab === "entrar"
+                          ? "text-black font-bold"
+                          : "text-gray-400"
+                      }`}
                     >
                       Entrar
                     </Text>
@@ -177,11 +380,23 @@ export default function LoginCadastro() {
                       className="flex-1"
                     >
                       {/* EMAIL LOGIN */}
-                      <View className="mb-5">
-                        <Text className="text-black text-base mb-2 font-medium">
+                      <View className="mb-4">
+                        <Text
+                          className={`text-base mb-1 font-medium ${
+                            Boolean(errors.loginEmail)
+                              ? "text-red-500"
+                              : "text-black"
+                          }`}
+                        >
                           Email
                         </Text>
-                        <View className="border border-gray-400 rounded-2xl px-4 py-3">
+                        <View
+                          className={`border rounded-2xl px-4 py-3 bg-white ${
+                            Boolean(errors.loginEmail)
+                              ? "border-red-500"
+                              : "border-gray-400"
+                          }`}
+                        >
                           <TextInput
                             placeholder="Insira seu endereço de email"
                             placeholderTextColor="#9CA3AF"
@@ -189,17 +404,41 @@ export default function LoginCadastro() {
                             keyboardType="email-address"
                             autoCapitalize="none"
                             value={loginEmail}
-                            onChangeText={setLoginEmail}
+                            onChangeText={(txt) => {
+                              setLoginEmail(txt);
+                              if (errors.loginEmail)
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  loginEmail: "",
+                                }));
+                            }}
                           />
                         </View>
+                        {Boolean(errors.loginEmail) && (
+                          <Text className="text-red-500 text-sm mt-1 ml-1 font-medium">
+                            {errors.loginEmail}
+                          </Text>
+                        )}
                       </View>
 
                       {/* SENHA LOGIN */}
-                      <View className="mb-5">
-                        <Text className="text-black text-base mb-2 font-medium">
+                      <View className="mb-4">
+                        <Text
+                          className={`text-base mb-1 font-medium ${
+                            Boolean(errors.loginPassword)
+                              ? "text-red-500"
+                              : "text-black"
+                          }`}
+                        >
                           Senha
                         </Text>
-                        <View className="border border-gray-400 rounded-2xl px-4 py-3 flex-row items-center">
+                        <View
+                          className={`border rounded-2xl px-4 py-3 bg-white flex-row items-center ${
+                            Boolean(errors.loginPassword)
+                              ? "border-red-500"
+                              : "border-gray-400"
+                          }`}
+                        >
                           <TextInput
                             placeholder="Insira sua senha"
                             placeholderTextColor="#9CA3AF"
@@ -207,7 +446,14 @@ export default function LoginCadastro() {
                             secureTextEntry={!showLoginPassword}
                             autoCapitalize="none"
                             value={loginPassword}
-                            onChangeText={setLoginPassword}
+                            onChangeText={(txt) => {
+                              setLoginPassword(txt);
+                              if (errors.loginPassword)
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  loginPassword: "",
+                                }));
+                            }}
                           />
                           <TouchableOpacity
                             onPress={() =>
@@ -225,34 +471,24 @@ export default function LoginCadastro() {
                             />
                           </TouchableOpacity>
                         </View>
-                      </View>
-
-                      <View className="flex-row justify-between items-center mt-2 px-1 mb-6">
-                        <TouchableOpacity
-                          onPress={() => setRememberMe(!rememberMe)}
-                          className="flex-row items-center"
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons
-                            name={rememberMe ? "checkbox" : "square-outline"}
-                            size={24}
-                            color={rememberMe ? "#1F3369" : "#D1D5DB"}
-                          />
-                          <Text className="ml-2 text-black text-base">
-                            Lembrar de mim
+                        {Boolean(errors.loginPassword) && (
+                          <Text className="text-red-500 text-sm mt-1 ml-1 font-medium">
+                            {errors.loginPassword}
                           </Text>
-                        </TouchableOpacity>
-
-                        <Link href="/recuperarSenha" asChild>
-                          <TouchableOpacity>
-                            <Text className="text-blue-500 text-base font-medium">
-                              Esqueci a senha
-                            </Text>
-                          </TouchableOpacity>
-                        </Link>
+                        )}
                       </View>
 
                       <ButtonAzulPadrao titulo="Entrar" onPress={handleLogin} />
+
+                      <View className="w-full mt-4 mb-6">
+                        <Link href="/recuperarSenha" asChild>
+                          <Pressable className="w-full py-3.5 rounded-full items-center justify-center bg-transparent active:bg-gray-100 web:hover:bg-gray-100 transition-colors">
+                            <Text className="text-black text-base font-medium">
+                              Esqueceu a senha?
+                            </Text>
+                          </Pressable>
+                        </Link>
+                      </View>
                     </ScrollView>
                   ) : (
                     /* CADASTRO */
@@ -265,26 +501,62 @@ export default function LoginCadastro() {
                     >
                       {/* NOME */}
                       <View className="mb-4">
-                        <Text className="text-black text-base mb-1 font-medium">
+                        <Text
+                          className={`text-base mb-1 font-medium ${
+                            Boolean(errors.registerName)
+                              ? "text-red-500"
+                              : "text-black"
+                          }`}
+                        >
                           Nome
                         </Text>
-                        <View className="border border-gray-200 rounded-2xl px-4 py-3 bg-white">
+                        <View
+                          className={`border rounded-2xl px-4 py-3 bg-white ${
+                            Boolean(errors.registerName)
+                              ? "border-red-500"
+                              : "border-gray-200"
+                          }`}
+                        >
                           <TextInput
                             placeholder="Digite seu nome"
                             placeholderTextColor="#9CA3AF"
                             className="text-base text-black"
                             value={registerName}
-                            onChangeText={setRegisterName}
+                            onChangeText={(txt) => {
+                              setRegisterName(txt);
+                              if (errors.registerName)
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  registerName: "",
+                                }));
+                            }}
                           />
                         </View>
+                        {Boolean(errors.registerName) && (
+                          <Text className="text-red-500 text-sm mt-1 ml-1 font-medium">
+                            {errors.registerName}
+                          </Text>
+                        )}
                       </View>
 
                       {/* EMAIL CADASTRO */}
                       <View className="mb-4">
-                        <Text className="text-black text-base mb-1 font-medium">
+                        <Text
+                          className={`text-base mb-1 font-medium ${
+                            Boolean(errors.registerEmail)
+                              ? "text-red-500"
+                              : "text-black"
+                          }`}
+                        >
                           Email
                         </Text>
-                        <View className="border border-gray-200 rounded-2xl px-4 py-3 bg-white">
+                        <View
+                          className={`border rounded-2xl px-4 py-3 bg-white ${
+                            Boolean(errors.registerEmail)
+                              ? "border-red-500"
+                              : "border-gray-200"
+                          }`}
+                        >
                           <TextInput
                             placeholder="Digite seu email"
                             placeholderTextColor="#9CA3AF"
@@ -292,17 +564,41 @@ export default function LoginCadastro() {
                             keyboardType="email-address"
                             autoCapitalize="none"
                             value={registerEmail}
-                            onChangeText={setRegisterEmail}
+                            onChangeText={(txt) => {
+                              setRegisterEmail(txt);
+                              if (errors.registerEmail)
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  registerEmail: "",
+                                }));
+                            }}
                           />
                         </View>
+                        {Boolean(errors.registerEmail) && (
+                          <Text className="text-red-500 text-sm mt-1 ml-1 font-medium">
+                            {errors.registerEmail}
+                          </Text>
+                        )}
                       </View>
 
                       {/* SENHA CADASTRO */}
                       <View className="mb-4">
-                        <Text className="text-black text-base mb-1 font-medium">
+                        <Text
+                          className={`text-base mb-1 font-medium ${
+                            Boolean(errors.registerPassword)
+                              ? "text-red-500"
+                              : "text-black"
+                          }`}
+                        >
                           Senha
                         </Text>
-                        <View className="border border-gray-200 rounded-2xl px-4 py-3 bg-white flex-row items-center">
+                        <View
+                          className={`border rounded-2xl px-4 py-3 bg-white flex-row items-center ${
+                            Boolean(errors.registerPassword)
+                              ? "border-red-500"
+                              : "border-gray-200"
+                          }`}
+                        >
                           <TextInput
                             placeholder="Digite sua senha"
                             placeholderTextColor="#9CA3AF"
@@ -310,7 +606,14 @@ export default function LoginCadastro() {
                             secureTextEntry={!showRegisterPassword}
                             autoCapitalize="none"
                             value={registerPassword}
-                            onChangeText={setRegisterPassword}
+                            onChangeText={(txt) => {
+                              setRegisterPassword(txt);
+                              if (errors.registerPassword)
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  registerPassword: "",
+                                }));
+                            }}
                           />
                           <TouchableOpacity
                             onPress={() =>
@@ -328,14 +631,31 @@ export default function LoginCadastro() {
                             />
                           </TouchableOpacity>
                         </View>
+                        {Boolean(errors.registerPassword) && (
+                          <Text className="text-red-500 text-sm mt-1 ml-1 font-medium">
+                            {errors.registerPassword}
+                          </Text>
+                        )}
                       </View>
 
                       {/* CONFIRMAR SENHA */}
                       <View className="mb-4">
-                        <Text className="text-black text-base mb-1 font-medium">
+                        <Text
+                          className={`text-base mb-1 font-medium ${
+                            Boolean(errors.registerConfirmPassword)
+                              ? "text-red-500"
+                              : "text-black"
+                          }`}
+                        >
                           Confirmar Senha
                         </Text>
-                        <View className="border border-gray-200 rounded-2xl px-4 py-3 bg-white flex-row items-center">
+                        <View
+                          className={`border rounded-2xl px-4 py-3 bg-white flex-row items-center ${
+                            Boolean(errors.registerConfirmPassword)
+                              ? "border-red-500"
+                              : "border-gray-200"
+                          }`}
+                        >
                           <TextInput
                             placeholder="Confirme sua senha"
                             placeholderTextColor="#9CA3AF"
@@ -343,7 +663,14 @@ export default function LoginCadastro() {
                             secureTextEntry={!showConfirmPassword}
                             autoCapitalize="none"
                             value={registerConfirmPassword}
-                            onChangeText={setRegisterConfirmPassword}
+                            onChangeText={(txt) => {
+                              setRegisterConfirmPassword(txt);
+                              if (errors.registerConfirmPassword)
+                                setErrors((prev) => ({
+                                  ...prev,
+                                  registerConfirmPassword: "",
+                                }));
+                            }}
                           />
                           <TouchableOpacity
                             onPress={() =>
@@ -361,6 +688,11 @@ export default function LoginCadastro() {
                             />
                           </TouchableOpacity>
                         </View>
+                        {Boolean(errors.registerConfirmPassword) && (
+                          <Text className="text-red-500 text-sm mt-1 ml-1 font-medium">
+                            {errors.registerConfirmPassword}
+                          </Text>
+                        )}
                       </View>
 
                       <ButtonAzulPadrao

@@ -10,6 +10,7 @@ import { ROTAS_MOCK } from "@/constants/rotasDados";
 import { useAuth } from "@/context/AuthProvider";
 import { useFavoritos } from "@/context/FavoritosProvider";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -26,6 +27,7 @@ import {
 export default function Favoritos() {
   const router = useRouter();
   const searchBarRef = useRef<TextInput>(null);
+  const [nomeUsuario, setNomeUsuario] = useState<string>("");
 
   const [busca, setBusca] = useState("");
   const [filtroBuscaAtivo, setFiltroBuscaAtivo] =
@@ -64,6 +66,33 @@ export default function Favoritos() {
     if (!usuarioLogado) {
       limparFavoritos();
     }
+  }, [usuarioLogado]);
+
+  useEffect(() => {
+    async function carregarNomeUsuario() {
+      if (usuarioLogado) {
+        try {
+          const userStorage = await AsyncStorage.getItem("@user");
+          if (userStorage) {
+            const userParsed = JSON.parse(userStorage);
+            const nomeCompleto = userParsed.name || userParsed.nome || "";
+            // Pega apenas o primeiro nome
+            const primeiroNome = nomeCompleto.split(" ")[0];
+            setNomeUsuario(primeiroNome);
+          }
+        } catch (error) {
+          console.error(
+            "Erro ao carregar nome do usuário nos Favoritos:",
+            error,
+          );
+        }
+      } else {
+        limparFavoritos();
+        setNomeUsuario("");
+      }
+    }
+
+    carregarNomeUsuario();
   }, [usuarioLogado]);
 
   const handleAlternarFavorito = useCallback(
@@ -350,7 +379,7 @@ export default function Favoritos() {
       <Screen>
         <View className="flex-1 px-4">
           <HomeHeader
-            titulo="Olá, Fulano"
+            titulo={`Olá, ${nomeUsuario || "Visitante"}`}
             subtitulo="Suas linhas salvas e favoritas"
           />
 

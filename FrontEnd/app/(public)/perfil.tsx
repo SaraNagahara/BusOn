@@ -4,20 +4,45 @@ import ButtonAzulPadrao from "@/components/buttonAzulPadrao";
 import { MenuFooter, TabOpcoes } from "@/components/MenuFooter";
 import { MenuOpcoesBloco } from "@/components/MenuOpcoesBlocoPerfil";
 import { Screen } from "@/components/safearea";
-import { ToastNotificacao } from "@/components/ToastNotificacao"; // 🚀 Importado nosso Toast
+import { ToastNotificacao } from "@/components/ToastNotificacao";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router"; // 🚀 Adicionado useLocalSearchParams
+import AsyncStorage from "@react-native-async-storage/async-storage"; // 🚀 Importado para ler os dados do storage
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, TouchableOpacity, View } from "react-native";
 
 export default function Perfil() {
   const router = useRouter();
   const { usuarioLogado } = useAuth();
-  const params = useLocalSearchParams(); // 🚀 Captura parâmetros vindos da navegação
+  const params = useLocalSearchParams();
+
+  // 🚀 Estado local para armazenar os dados do usuário do AsyncStorage
+  const [dadosUsuario, setDadosUsuario] = useState<{
+    name?: string;
+    email?: string;
+  } | null>(null);
 
   // 🚀 Estado local para gerenciar a exibição do Toast
   const [exibirToast, setExibirToast] = useState(false);
+
+  // 🚀 Busca os dados do usuário salvos no AsyncStorage quando a tela carregar ou o login mudar
+  useEffect(() => {
+    async function carregarDadosUsuario() {
+      if (usuarioLogado) {
+        try {
+          const userStorage = await AsyncStorage.getItem("@user");
+          if (userStorage) {
+            setDadosUsuario(JSON.parse(userStorage));
+          }
+        } catch (error) {
+          console.error("Erro ao carregar dados do usuário no Perfil:", error);
+        }
+      }
+    }
+
+    carregarDadosUsuario();
+  }, [usuarioLogado]);
 
   // 🚀 Dispara o Toast se encontrar o parâmetro "deslogado" vindo do replace
   useEffect(() => {
@@ -83,7 +108,7 @@ export default function Perfil() {
         {/* 🗺️ ÁREA DO TOPO COM O BOTÃO VOLTAR FIXO */}
         <View className="w-full px-5 pt-2 items-start justify-start">
           <TouchableOpacity
-            onPress={() => router.back()} // 🚀 Volta para a tela anterior
+            onPress={() => router.back()}
             className="w-12 h-12 justify-center items-start"
             activeOpacity={0.7}
           >
@@ -98,11 +123,13 @@ export default function Perfil() {
               <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center border-4 border-slate-50 shadow-sm mb-3">
                 <Ionicons name="person" size={42} color="#3F5CC4" />
               </View>
+
+              {/* ⚡ EXIBE O NOME VINDOD DO ASYNC STORAGE */}
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xl text-slate-900 text-center"
               >
-                Fulano de Tal
+                {dadosUsuario?.name || "Usuário"}
               </Text>
             </View>
 
@@ -113,7 +140,7 @@ export default function Perfil() {
             <ButtonAzulPadrao
               titulo="Sair da conta"
               onPress={handleIrParaLogout}
-              style={{ marginTop: 24 }} // ⚡ Reduz a distância do bloco de cima para não ocupar a tela inteira
+              style={{ marginTop: 24 }}
               icone={
                 <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
               }
@@ -124,9 +151,9 @@ export default function Perfil() {
           <View className="flex-1 px-5 pt-2 position-relative">
             {/* 🚀 TOAST EM POSIÇÃO ABSOLUTA FLUTUANDO NO TOPO DO CONTEÚDO */}
             {exibirToast && (
-              <View className="absolute top-0 left-5 right-5 z-50 shadow-lg">
+              <View className="absolute top-12 left-4 right-4 z-50">
                 <ToastNotificacao
-                  mensagem="Conta deslogada com sucesso!"
+                  mensagem="Logout efetuado com sucesso!"
                   tipo="sucesso"
                   aoFechar={() => setExibirToast(false)}
                 />
@@ -192,7 +219,6 @@ export default function Perfil() {
                 Conta
               </Text>
 
-              {/* 🎨 Cor alterada para #1D61E7 casando com o ButtonAzulPadrao */}
               <Pressable
                 onPress={handleIrParaLogin}
                 className="flex-row items-center justify-between bg-[#1D61E7] p-4 rounded-2xl active:bg-[#154cb8]"
