@@ -1,6 +1,12 @@
-// context/AuthProvider.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 interface UserProps {
   id: number;
@@ -22,10 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserProps | null>(null);
 
-  // 🔒 Derivado do token: se tem token, usuarioLogado é true
   const usuarioLogado = Boolean(token && token.length > 0);
 
-  // Carrega os dados salvos do AsyncStorage assim que o app inicia
   useEffect(() => {
     async function carregarSessao() {
       try {
@@ -44,21 +48,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     carregarSessao();
   }, []);
 
-  // Guardar no AsyncStorage e atualizar estados locais
-  const salvarSessao = async (novoToken: string, dadosUsuario: UserProps) => {
-    try {
-      await AsyncStorage.setItem("@token", novoToken);
-      await AsyncStorage.setItem("@user", JSON.stringify(dadosUsuario));
+  // ⚡ Memoriza as funções para não recriá-las a cada render
+  const salvarSessao = useCallback(
+    async (novoToken: string, dadosUsuario: UserProps) => {
+      try {
+        await AsyncStorage.setItem("@token", novoToken);
+        await AsyncStorage.setItem("@user", JSON.stringify(dadosUsuario));
 
-      setToken(novoToken);
-      setUser(dadosUsuario);
-    } catch (error) {
-      console.error("Erro ao salvar sessão:", error);
-    }
-  };
+        setToken(novoToken);
+        setUser(dadosUsuario);
+      } catch (error) {
+        console.error("Erro ao salvar sessão:", error);
+      }
+    },
+    [],
+  );
 
-  // Limpar sessão
-  const encerrarSessao = async () => {
+  const encerrarSessao = useCallback(async () => {
     try {
       await AsyncStorage.removeItem("@token");
       await AsyncStorage.removeItem("@user");
@@ -68,20 +74,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Erro ao encerrar sessão:", error);
     }
-  };
+  }, []);
+
+  // ⚡ OTIMIZAÇÃO CRÍTICA: O value só muda se token, user ou usuarioLogado mudarem
+  const contextValue = useMemo(
+    () => ({
+      usuarioLogado,
+      user,
+      token,
+      salvarSessao,
+      encerrarSessao,
+    }),
+    [usuarioLogado, user, token, salvarSessao, encerrarSessao],
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        usuarioLogado,
-        user,
-        token,
-        salvarSessao,
-        encerrarSessao,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 

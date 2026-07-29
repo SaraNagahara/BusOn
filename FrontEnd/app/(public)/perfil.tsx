@@ -7,54 +7,38 @@ import { Screen } from "@/components/safearea";
 import { ToastNotificacao } from "@/components/ToastNotificacao";
 import { useAuth } from "@/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // 🚀 Importado para ler os dados do storage
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function Perfil() {
   const router = useRouter();
-  const { usuarioLogado } = useAuth();
+  const { usuarioLogado, user } = useAuth();
   const params = useLocalSearchParams();
 
-  // 🚀 Estado local para armazenar os dados do usuário do AsyncStorage
-  const [dadosUsuario, setDadosUsuario] = useState<{
-    name?: string;
-    email?: string;
-  } | null>(null);
-
-  // 🚀 Estado local para gerenciar a exibição do Toast
   const [exibirToast, setExibirToast] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // 🚀 Busca os dados do usuário salvos no AsyncStorage quando a tela carregar ou o login mudar
-  useEffect(() => {
-    async function carregarDadosUsuario() {
-      if (usuarioLogado) {
-        try {
-          const userStorage = await AsyncStorage.getItem("@user");
-          if (userStorage) {
-            setDadosUsuario(JSON.parse(userStorage));
-          }
-        } catch (error) {
-          console.error("Erro ao carregar dados do usuário no Perfil:", error);
-        }
-      }
-    }
+  // Reset do estado ao retornar para a tela de Perfil (caso o usuário use o goBack no Login)
+  useFocusEffect(
+    useCallback(() => {
+      setIsNavigating(false);
+    }, []),
+  );
 
-    carregarDadosUsuario();
-  }, [usuarioLogado]);
-
-  // 🚀 Dispara o Toast se encontrar o parâmetro "deslogado" vindo do replace
   useEffect(() => {
     if (params?.deslogado === "true") {
       setExibirToast(true);
-
-      // Limpa os parâmetros da URL para evitar que reative ao rotacionar a tela
       router.setParams({ deslogado: undefined });
     }
-  }, [params?.deslogado]);
+  }, [params?.deslogado, router]);
 
-  // ⚡ OTIMIZAÇÃO: Memoriza a função do Footer
   const handleNavegacaoFooter = useCallback(
     (aba: TabOpcoes) => {
       if (aba === "home") {
@@ -67,22 +51,19 @@ export default function Perfil() {
     [router],
   );
 
-  // ⚡ OTIMIZAÇÃO: Cliques memorizados
+  // 🚀 Mantém a tela de Perfil na pilha usando router.push para que o goBack() continue funcionando!
   const handleIrParaLogin = useCallback(() => {
-    router.push("/loginCadastro");
-  }, [router]);
+    if (isNavigating) return;
+    setIsNavigating(true);
+
+    // 🚀 Executa a navegação após o feedback visual do toque ser desenhado
+    requestAnimationFrame(() => {
+      router.push("/loginCadastro");
+    });
+  }, [router, isNavigating]);
 
   const handleIrParaTermos = useCallback(() => {
     router.push("/termosDeUso");
-  }, [router]);
-
-  // 🚀 NOVAS ROTAS SOLICITADAS: Cliques do componente reaproveitável
-  const handleIrParaDadosPerfil = useCallback(() => {
-    router.push("/dadosPerfilDoUsuario");
-  }, [router]);
-
-  const handleIrParaConfiguracoes = useCallback(() => {
-    router.push("/configuracoesDoUsuario");
   }, [router]);
 
   const handleIrParaLogout = useCallback(() => {
@@ -105,7 +86,7 @@ export default function Perfil() {
   return (
     <View className="flex-1 bg-[#F2F2F7]">
       <Screen>
-        {/* 🗺️ ÁREA DO TOPO COM O BOTÃO VOLTAR FIXO */}
+        {/* ÁREA DO TOPO */}
         <View className="w-full px-5 pt-2 items-start justify-start">
           <TouchableOpacity
             onPress={() => router.back()}
@@ -118,25 +99,21 @@ export default function Perfil() {
 
         {usuarioLogado ? (
           <View className="flex-1 px-5">
-            {/* 👤 FOTO DE PERFIL, NOME E EMAIL CENTRALIZADOS ABAIXO DA SETA */}
             <View className="items-center my-6">
               <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center border-4 border-slate-50 shadow-sm mb-3">
                 <Ionicons name="person" size={42} color="#3F5CC4" />
               </View>
 
-              {/* ⚡ EXIBE O NOME VINDOD DO ASYNC STORAGE */}
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xl text-slate-900 text-center"
               >
-                {dadosUsuario?.name || "Usuário"}
+                {user?.name || "Usuário"}
               </Text>
             </View>
 
-            {/* ⚙️ COMPONENTE INSTANCIADO CORRETAMENTE COM AS PROPS DE NAVEGAÇÃO */}
             <MenuOpcoesBloco opcoes={opcoesPerfil} />
 
-            {/* 🚪 COMPONENTE AJUSTADO PARA FICAR MENOS ROBUSTO */}
             <ButtonAzulPadrao
               titulo="Sair da conta"
               onPress={handleIrParaLogout}
@@ -147,9 +124,8 @@ export default function Perfil() {
             />
           </View>
         ) : (
-          /* 👤 CONTEÚDO DO VISITANTE SUPER OTIMIZADO */
+          /* VISITANTE */
           <View className="flex-1 px-5 pt-2 position-relative">
-            {/* 🚀 TOAST EM POSIÇÃO ABSOLUTA FLUTUANDO NO TOPO DO CONTEÚDO */}
             {exibirToast && (
               <View className="absolute top-12 left-4 right-4 z-50">
                 <ToastNotificacao
@@ -160,7 +136,6 @@ export default function Perfil() {
               </View>
             )}
 
-            {/* 👤 HEADER DO PERFIL DE VISITANTE */}
             <View className="items-center my-6">
               <View className="w-24 h-24 bg-slate-100 rounded-full items-center justify-center border-4 border-slate-50 shadow-sm mb-3">
                 <Ionicons name="person-add-outline" size={42} color="#3F5CC4" />
@@ -179,7 +154,6 @@ export default function Perfil() {
               </Text>
             </View>
 
-            {/* ⚙️ LISTA DE OPÇÕES / MENU */}
             <View className="flex-1 mt-4">
               <Text
                 style={{ fontFamily: fonts.bold }}
@@ -188,7 +162,6 @@ export default function Perfil() {
                 Geral
               </Text>
 
-              {/* Link para Termos de Uso e Política de Privacidade */}
               <Pressable
                 onPress={handleIrParaTermos}
                 className="flex-row items-center justify-between bg-slate-50 p-4 rounded-2xl mb-3 active:bg-slate-100"
@@ -211,7 +184,6 @@ export default function Perfil() {
                 <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
               </Pressable>
 
-              {/* 🚪 BOTÃO DE ENTRAR COM A CONTA */}
               <Text
                 style={{ fontFamily: fonts.bold }}
                 className="text-xs text-slate-400 uppercase tracking-widest mt-4 mb-3 px-1"
@@ -219,9 +191,13 @@ export default function Perfil() {
                 Conta
               </Text>
 
-              <Pressable
+              <TouchableOpacity
                 onPress={handleIrParaLogin}
-                className="flex-row items-center justify-between bg-[#1D61E7] p-4 rounded-2xl active:bg-[#154cb8]"
+                disabled={isNavigating}
+                activeOpacity={0.7}
+                className={`flex-row items-center justify-between bg-[#1D61E7] p-4 rounded-2xl ${
+                  isNavigating ? "opacity-70" : ""
+                }`}
               >
                 <View className="flex-row items-center gap-3">
                   <View className="bg-white/20 p-2 rounded-xl">
@@ -234,13 +210,17 @@ export default function Perfil() {
                     Entrar com minha conta
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
-              </Pressable>
+
+                {isNavigating ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* Rodapé com a indicação visual fixa na aba "perfil" */}
         <MenuFooter abaAtiva="perfil" aoMudarAba={handleNavegacaoFooter} />
       </Screen>
     </View>
