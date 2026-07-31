@@ -18,12 +18,13 @@ import {
 
 export default function RecuperarSenhaParte3() {
   const [newPassword, setNewPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(
-    "A senha deve ter 8 dígitos",
+    "A senha deve ter no mínimo 6 dígitos",
   );
 
-  const { usuarioLogado } = useAuth();
+  const { usuarioLogado, token } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -34,22 +35,71 @@ export default function RecuperarSenhaParte3() {
   }
 
   // 🚀 CORRIGIDO: Agora ambos os fluxos vão para a Parte 4, mas com flags diferentes
-  const handleAlterarSenha = () => {
-    if (veioDoPerfil) {
-      // 🔄 Veio do Perfil: Vai para o sucesso avisando que foi alteração de SENHA interna
-      router.push({
-        pathname: "/recuperarSenhaparte4",
-        params: { origem: "perfil_senha" },
-      });
-    } else {
-      // 🔒 Fluxo Externo: Esqueci a senha tradicional do login
-      router.push({
-        pathname: "/recuperarSenhaparte4",
-        params: { origem: "externo" },
-      });
+  const handleAlterarSenha = async () => {
+    // Validação das senhas (boa prática de UX)
+    if (newPassword.length < 6) {
+      setErrorMessage("A senha deve ter no mínimo 6 dígitos");
+      return;
     }
-  };
 
+    if (newPassword !== confirmPassword) {
+      setErrorMessage("As senhas não coincidem");
+      return;
+    }
+
+    // 🛡️ VERIFICAÇÃO DE SEGURANÇA: Checa se o token ainda existe
+    if (!token) {
+      setErrorMessage("Sessão expirada. Por favor, faça login novamente.");
+      // Opcional: redirecionar para o login
+      // router.replace("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/users/changePassowrd",
+        {
+          method: "POST", //TROCAR PARA PATCH
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            password: oldPassword,
+            newPassword: newPassword,
+            newPasswordConfirmation: confirmPassword,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.log(data.message);
+        return;
+      }
+      console.log("sucesso: ", data.message);
+
+      if (veioDoPerfil) {
+        // 🔄 Veio do Perfil
+        router.push({
+          pathname: "/recuperarSenhaparte4",
+          params: { origem: "perfil_senha" },
+        });
+      }
+    } catch (error) {
+      console.log("mensagem: ", error);
+    }
+
+    // 🚀 Fluxos de Navegação mantidos
+    //  else {
+    //   // 🔒 Fluxo Externo
+    //   router.push({
+    //     pathname: "/recuperarSenhaparte4",
+    //     params: { origem: "externo" },
+    //   });
+    // }
+  };
   return (
     <FundoAzul>
       <Screen>
@@ -85,6 +135,16 @@ export default function RecuperarSenhaParte3() {
                 keyboardDismissMode="on-drag"
                 className="flex-1"
               >
+                {veioDoPerfil && (
+                  <View className="mt-4">
+                    <PasswordInputField
+                      label="SENHA ATUAL"
+                      value={oldPassword}
+                      onChangeText={setOldPassword}
+                    />
+                  </View>
+                )}
+
                 <View className="mt-4">
                   <PasswordInputField
                     label="NOVA SENHA"
