@@ -15,14 +15,37 @@ import {
   Text,
   View,
 } from "react-native";
+import { z } from "zod";
+
+// Schema de validação utilizando Zod mantendo o mesmo padrão de regras
+const resetPasswordSchema = z
+  .object({
+    oldPassword: z.string().optional(),
+    newPassword: z
+      .string()
+      .min(1, "A nova senha é obrigatória")
+      .min(8, "A senha deve ter no mínimo 8 caracteres")
+      .regex(/[a-zA-Z]/, "A senha deve conter pelo menos uma letra")
+      .regex(/[0-9]/, "A senha deve conter pelo menos um número"),
+    confirmPassword: z.string().min(1, "A confirmação de senha é obrigatória"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "As senhas não coincidem!",
+    path: ["confirmPassword"],
+  });
+
+type ResetPasswordErrors = {
+  oldPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+  general?: string;
+};
 
 export default function RecuperarSenhaParte3() {
   const [newPassword, setNewPassword] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState(
-    "A senha deve ter no mínimo 6 dígitos",
-  );
+  const [errors, setErrors] = useState<ResetPasswordErrors>({});
 
   const { usuarioLogado, token } = useAuth();
   const router = useRouter();
@@ -34,32 +57,51 @@ export default function RecuperarSenhaParte3() {
     return <Redirect href="/notfound" />;
   }
 
-  // 🚀 CORRIGIDO: Agora ambos os fluxos vão para a Parte 4, mas com flags diferentes
   const handleAlterarSenha = async () => {
-    // Validação das senhas (boa prática de UX)
-    if (newPassword.length < 6) {
-      setErrorMessage("A senha deve ter no mínimo 6 dígitos");
+    // Limpa erros anteriores
+    setErrors({});
+
+    // Validação extra se veio do perfil
+    if (veioDoPerfil && !oldPassword) {
+      setErrors((prev) => ({
+        ...prev,
+        oldPassword: "A senha atual é obrigatória",
+      }));
       return;
     }
 
-    if (newPassword !== confirmPassword) {
-      setErrorMessage("As senhas não coincidem");
+    // Validação com Zod
+    const validation = resetPasswordSchema.safeParse({
+      oldPassword,
+      newPassword,
+      confirmPassword,
+    });
+
+    if (!validation.success) {
+      const formattedErrors: ResetPasswordErrors = {};
+      validation.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof ResetPasswordErrors;
+        if (field && !formattedErrors[field]) {
+          formattedErrors[field] = issue.message;
+        }
+      });
+      setErrors(formattedErrors);
       return;
     }
 
-    // 🛡️ VERIFICAÇÃO DE SEGURANÇA: Checa se o token ainda existe
+    // Verificação de token
     if (!token) {
-      setErrorMessage("Sessão expirada. Por favor, faça login novamente.");
-      // Opcional: redirecionar para o login
-      // router.replace("/login");
+      setErrors({
+        general: "Sessão expirada. Por favor, faça login novamente.",
+      });
       return;
     }
 
     try {
       const response = await fetch(
-        "http://localhost:5000/users/changePassowrd",
+        "http://192.168.0.105:5000/users/changePassowrd",
         {
-          method: "POST", //TROCAR PARA PATCH
+          method: "POST", // TROCAR PARA PATCH
           headers: {
             "content-type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -76,12 +118,12 @@ export default function RecuperarSenhaParte3() {
 
       if (!response.ok) {
         console.log(data.message);
+        setErrors({ general: data.message || "Erro ao alterar a senha" });
         return;
       }
       console.log("sucesso: ", data.message);
 
       if (veioDoPerfil) {
-        // 🔄 Veio do Perfil
         router.push({
           pathname: "/recuperarSenhaparte4",
           params: { origem: "perfil_senha" },
@@ -89,17 +131,10 @@ export default function RecuperarSenhaParte3() {
       }
     } catch (error) {
       console.log("mensagem: ", error);
+      setErrors({ general: "Ocorreu um erro ao tentar alterar a senha." });
     }
-
-    // 🚀 Fluxos de Navegação mantidos
-    //  else {
-    //   // 🔒 Fluxo Externo
-    //   router.push({
-    //     pathname: "/recuperarSenhaparte4",
-    //     params: { origem: "externo" },
-    //   });
-    // }
   };
+
   return (
     <FundoAzul>
       <Screen>
@@ -141,6 +176,8 @@ export default function RecuperarSenhaParte3() {
                       label="SENHA ATUAL"
                       value={oldPassword}
                       onChangeText={setOldPassword}
+                      error={!!errors.oldPassword}
+                      errorMessage={errors.oldPassword}
                     />
                   </View>
                 )}
@@ -150,17 +187,21 @@ export default function RecuperarSenhaParte3() {
                     label="NOVA SENHA"
                     value={newPassword}
                     onChangeText={setNewPassword}
+                    error={!!errors.newPassword}
+                    errorMessage={errors.newPassword}
                   />
 
                   <PasswordInputField
                     label="CONFIRMAR NOVA SENHA"
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
+                    error={!!errors.confirmPassword}
+                    errorMessage={errors.confirmPassword}
                   />
 
-                  {errorMessage && newPassword !== "" && (
+                  {errors.general && (
                     <Text className="text-sm text-red-500 mt-2 px-1">
-                      {errorMessage}
+                      {errors.general}
                     </Text>
                   )}
                 </View>

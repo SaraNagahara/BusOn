@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface PasswordInputFieldProps {
@@ -7,6 +7,7 @@ interface PasswordInputFieldProps {
   placeholder?: string;
   value: string;
   onChangeText: (text: string) => void;
+  error?: boolean;
   errorMessage?: string;
 }
 
@@ -15,6 +16,7 @@ export default function PasswordInputField({
   placeholder = "Digite sua senha",
   value,
   onChangeText,
+  error = false,
   errorMessage,
 }: PasswordInputFieldProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -23,13 +25,24 @@ export default function PasswordInputField({
     setIsPasswordVisible((prev) => !prev);
   };
 
+  // Se 'error' for verdadeiro ou se 'errorMessage' existir, aplica o estado de erro
+  const hasError = error || !!errorMessage;
+
   return (
     <View className="mb-5">
-      <Text className="text-slate-700 font-bold mb-2 tracking-wide text-xm">
+      <Text
+        className={`font-bold mb-2 tracking-wide text-xm ${
+          hasError ? "text-red-600" : "text-slate-700"
+        }`}
+      >
         {label}
       </Text>
 
-      <View className="flex-row items-center border border-slate-300 rounded-2xl px-4 py-5 bg-white">
+      <View
+        className={`flex-row items-center border rounded-2xl px-4 py-5 bg-white ${
+          hasError ? "border-red-600" : "border-slate-300"
+        }`}
+      >
         <TextInput
           className="flex-1 text-base text-gray-800 p-0 m-0"
           placeholder={placeholder}
@@ -44,8 +57,8 @@ export default function PasswordInputField({
         <TouchableOpacity onPress={togglePasswordVisibility} className="ml-2">
           <Feather
             name={isPasswordVisible ? "eye" : "eye-off"}
-            size={22} // Aumentado levemente para acompanhar a nova altura
-            color="#94A3B8"
+            size={22}
+            color={hasError ? "#DC2626" : "#94A3B8"}
           />
         </TouchableOpacity>
       </View>

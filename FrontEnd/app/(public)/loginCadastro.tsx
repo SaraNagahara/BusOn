@@ -49,7 +49,9 @@ const registerSchema = z
     registerPassword: z
       .string()
       .min(1, "A senha é obrigatória")
-      .min(6, "A senha deve ter no mínimo 6 caracteres"),
+      .min(8, "A senha deve ter no mínimo 8 caracteres")
+      .regex(/[a-zA-Z]/, "A senha deve conter pelo menos uma letra")
+      .regex(/[0-9]/, "A senha deve conter pelo menos um número"),
     registerConfirmPassword: z
       .string()
       .min(1, "A confirmação de senha é obrigatória"),
@@ -133,7 +135,7 @@ export default function LoginCadastro() {
     }
 
     try {
-      const response = await fetch("http://192.168.0.120:5000/auth/login", {
+      const response = await fetch("http://192.168.0.105:5000/auth/login", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -230,7 +232,7 @@ export default function LoginCadastro() {
       .join(" ");
 
     try {
-      const response = await fetch("http://192.168.0.120:5000/auth/register", {
+      const response = await fetch("http://192.168.0.105:5000/auth/register", {
         method: "POST",
         headers: {
           "content-type": "application/json",
