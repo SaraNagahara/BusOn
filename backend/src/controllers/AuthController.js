@@ -132,11 +132,11 @@ module.exports = class AuthController {
       // VALIDA SENHA
       // ---------------------------------------------------
 
-      if (registerPassword.length < 6) {
+      if (registerPassword.length < 8) {
 
         return res.status(422).json({
           message:
-            "A senha deve conter no mínimo 6 caracteres.",
+            "A senha deve conter no mínimo 8 caracteres.",
         });
 
       }
@@ -201,7 +201,7 @@ module.exports = class AuthController {
 
         return res.status(409).json({
           message:
-            "Não foi possível realizar o cadastro com esses dados.",
+            "Este e-mail já está cadastrado.",
         });
 
       }
@@ -473,7 +473,7 @@ module.exports = class AuthController {
       });
 
 
-      // Não revela existência
+      // Não revela existência, " Podemos mudar isso caso fique complexo".
       if (!user) {
 
         return res.status(200).json({
@@ -500,7 +500,7 @@ module.exports = class AuthController {
 
 
       // ---------------------------------------------------
-      // REMOVE RECUPERAÇÕES ANTERIORES
+      // Remove recuperações anteriores.
       // ---------------------------------------------------
 
       await PasswordReset.destroy({
@@ -511,7 +511,7 @@ module.exports = class AuthController {
 
 
       // ---------------------------------------------------
-      // CRIA NOVA RECUPERAÇÃO
+      // Cria nova recuperação
       // ---------------------------------------------------
 
       await PasswordReset.create({
@@ -534,7 +534,7 @@ module.exports = class AuthController {
 
 
       // ---------------------------------------------------
-      // ENVIA EMAIL
+      // Envia Email
       // ---------------------------------------------------
 
       await EmailService.sendRecoveryPin({
