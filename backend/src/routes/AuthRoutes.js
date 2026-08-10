@@ -2,18 +2,77 @@ const router = require("express").Router();
 
 const AuthController = require("../controllers/AuthController");
 
-//Middleware
-const VerifyToken = require("../middlewares/virifyToken");
+const {
+  sensitiveLimiter
+} = require("../middlewares/rateLimiter");
 
-// Públicas
-router.post("/register", AuthController.register);
-router.post("/login", AuthController.login);
-router.post("/forgot-password", AuthController.forgotPassword);
-router.post("/verify-pin", AuthController.verifyPin);
-router.post("/reset-password", AuthController.resetPassword);
+const VerifyToken =
+  require("../middlewares/virifyToken");
 
-// Privadas
-router.post("/logout", VerifyToken, AuthController.logout);
-router.get("/me", VerifyToken, AuthController.me);
+
+// =========================================================
+// CADASTRO
+// =========================================================
+
+router.post(
+  "/register",
+  AuthController.register
+);
+
+
+// =========================================================
+// LOGIN
+// =========================================================
+
+router.post(
+  "/login",
+  sensitiveLimiter,
+  AuthController.login
+);
+
+
+// =========================================================
+// LOGOUT
+// =========================================================
+
+router.post(
+  "/logout",
+  AuthController.logout
+);
+
+
+// =========================================================
+// RECUPERAÇÃO DE SENHA
+// =========================================================
+
+router.post(
+  "/forgot-password",
+  sensitiveLimiter,
+  AuthController.forgotPassword
+);
+
+router.post(
+  "/verify-pin",
+  sensitiveLimiter,
+  AuthController.verifyPin
+);
+
+router.post(
+  "/reset-password",
+  sensitiveLimiter,
+  AuthController.resetPassword
+);
+
+
+// =========================================================
+// USUÁRIO AUTENTICADO
+// =========================================================
+
+router.get(
+  "/me",
+  VerifyToken,
+  AuthController.me
+);
+
 
 module.exports = router;

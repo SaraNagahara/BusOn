@@ -1,5 +1,5 @@
 const { DataTypes } = require("sequelize");
-const db = require("../db/conn"); // sua conexão
+const db = require("../db/conn");
 
 const User = db.define(
   "User",
@@ -11,32 +11,39 @@ const User = db.define(
     },
 
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [2, 100],
+      },
     },
 
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
       unique: true,
       validate: {
         isEmail: true,
       },
     },
-    
+
     password: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
   },
   {
     tableName: "users",
     timestamps: true,
-  },
-);
 
-User.hasMany(require("./PasswordReset"), {
-  foreignKey: "user_id",
-});
+    indexes: [
+      {
+        unique: true,
+        fields: ["email"],
+      },
+    ],
+  }
+);
 
 module.exports = User;

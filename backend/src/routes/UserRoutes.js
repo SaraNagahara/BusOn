@@ -1,14 +1,50 @@
 const router = require("express").Router();
-const UserController = require("../controllers/UserController");
-const ScheduleController = require("../controllers/ScheduleController");
 
-//Middleware
-const VerifyToken = require("../middlewares/virifyToken");
+const UserController =
+  require("../controllers/UserController");
+
+const VerifyToken =
+  require("../middlewares/virifyToken");
+
+const {
+  sensitiveLimiter
+} = require("../middlewares/rateLimiter");
 
 
-router.post("/delete", VerifyToken, UserController.DeleteUserByID);
+// =========================================================
+// ALTERAR SENHA
+// =========================================================
 
-// Routes Update authenticated user data
-router.post("/changePassowrd", VerifyToken, UserController.changeUserPassword)
-router.post("/changeEmail", VerifyToken, UserController.changeUserEmail)
+router.put(
+  "/changePassword",
+  VerifyToken,
+  sensitiveLimiter,
+  UserController.changeUserPassword
+);
+
+
+// =========================================================
+// ALTERAR EMAIL
+// =========================================================
+
+router.put(
+  "/changeEmail",
+  VerifyToken,
+  sensitiveLimiter,
+  UserController.changeUserEmail
+);
+
+
+// =========================================================
+// EXCLUIR CONTA
+// =========================================================
+
+router.delete(
+  "/delete",
+  VerifyToken,
+  sensitiveLimiter,
+  UserController.DeleteUserByID
+);
+
+
 module.exports = router;

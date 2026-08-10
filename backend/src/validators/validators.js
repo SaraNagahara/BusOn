@@ -1,16 +1,35 @@
+
 const crypto = require("crypto");
 
-// gerar PIN de 5 dígitos
-function generatePin() {
-  return crypto.randomInt(10000, 100000).toString();
-}
 
-// hash do PIN
-function hashPin(pin) {
+// =========================================================
+// GERAR PIN
+// =========================================================
+
+const generatePin = () => {
+
+  return crypto
+    .randomInt(100000, 1000000)
+    .toString();
+
+};
+
+
+// =========================================================
+// HASH DO PIN
+// =========================================================
+
+const hashPin = (pin) => {
+
   return crypto
     .createHash("sha256")
     .update(pin)
     .digest("hex");
-}
 
-module.exports = {generatePin, hashPin}
+};
+
+
+module.exports = {
+  generatePin,
+  hashPin,
+};
