@@ -52,19 +52,27 @@ const Itinerario = db.define(
   },
   {
     tableName: "itinerarios",
-    timestamps: true, // cria createdAt e updatedAt automaticamente
+
+    timestamps: true,
+
     indexes: [
       {
         fields: ["titulo"],
       },
+
       {
         fields: ["horario"],
       },
+
       {
         fields: ["origem", "destino"],
       },
+
+      {
+        fields: ["titulo", "tipo"],
+      },
     ],
-  },
+  }
 );
 
 module.exports = Itinerario;
